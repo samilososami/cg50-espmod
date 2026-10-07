@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://samilososami.github.io/cg50-esp32mod/sitemap.xml

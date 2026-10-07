@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use or build upon this project, please cite the repository."
+title: "cg50-esp32mod: Wi-Fi and cloud AI for the Casio fx-CG50"
+type: software
+authors:
+  - family-names: "Gonzalez Kamel"
+    given-names: "Sami"
+repository-code: "https://github.com/samilososami/cg50-esp32mod"
+url: "https://samilososami.github.io/cg50-esp32mod/"
+license: MIT
+version: 0.1.0
+date-released: 2026-10-07
+keywords:
+  - Casio fx-CG50
+  - Casio Prizm
+  - XIAO ESP32-C3
+  - ESP32
+  - g3a add-in
+  - UART
+  - Wi-Fi
+  - Ollama Cloud
+  - embedded systems
+  - calculator mod

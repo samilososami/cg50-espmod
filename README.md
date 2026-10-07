@@ -1,12 +1,15 @@
 <div align="center">
 
-# cg50-esp32mod
+# cg50-esp32mod — Casio fx-CG50 Wi-Fi + AI mod
 
-**Wi-Fi y asistencia mediante IA en una Casio fx-CG50 usando una XIAO ESP32-C3 integrada por UART.**
+**Mod open source que añade Wi-Fi y asistencia mediante IA a una Casio fx-CG50 usando una XIAO ESP32-C3 integrada por UART.**
+
+*Open-source Casio fx-CG50 ESP32 mod with CasioWIFI and CasioGPT `.g3a` add-ins, UART firmware, Wi-Fi management and Ollama Cloud streaming.*
 
 [![Hardware](https://img.shields.io/badge/hardware-XIAO%20ESP32--C3-00bfa5)](hardware/WIRING.md)
 [![Calculator](https://img.shields.io/badge/calculator-Casio%20fx--CG50-2675ff)](#compatibilidad)
 [![License](https://img.shields.io/badge/license-MIT-white)](LICENSE)
+[![Website](https://img.shields.io/badge/website-GitHub%20Pages-26A7F5)](https://samilososami.github.io/cg50-esp32mod/)
 
 <img src="docs/images/ui/casiogpt-on-calculator.jpg" alt="CasioGPT funcionando físicamente en una Casio fx-CG50 modificada" width="430">
 
