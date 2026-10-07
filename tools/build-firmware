@@ -13,9 +13,9 @@ fi
 mkdir -p "$BUILD" "$ROOT/dist"
 "$ROOT/tools/arduino-cli" compile --fqbn "$FQBN" --build-path "$BUILD" "$SKETCH"
 
-install -m 0664 "$BUILD/casioesp_wifi.ino.bin" "$ROOT/dist/cg50-esp32mod-esp32-app.bin"
+install -m 0664 "$BUILD/casioesp_wifi.ino.bin" "$ROOT/dist/cg50-espmod-esp32-app.bin"
 if [[ -f "$BUILD/casioesp_wifi.ino.merged.bin" ]]; then
-  install -m 0664 "$BUILD/casioesp_wifi.ino.merged.bin" "$ROOT/dist/cg50-esp32mod-esp32-merged.bin"
+  install -m 0664 "$BUILD/casioesp_wifi.ino.merged.bin" "$ROOT/dist/cg50-espmod-esp32-merged.bin"
 fi
 
-sha256sum "$ROOT/dist"/cg50-esp32mod-esp32-*.bin
+sha256sum "$ROOT/dist"/cg50-espmod-esp32-*.bin

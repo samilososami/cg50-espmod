@@ -33,8 +33,8 @@ Los resultados revisables quedan en `dist/`:
 
 - `CASIOWIFI.g3a`
 - `CASIOGPT.g3a`
-- `cg50-esp32mod-esp32-app.bin`
-- `cg50-esp32mod-esp32-merged.bin`
+- `cg50-espmod-esp32-app.bin`
+- `cg50-espmod-esp32-merged.bin`
 - `checksums.txt`
 
 ## Pruebas de host

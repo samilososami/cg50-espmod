@@ -1,6 +1,6 @@
 <div align="center">
 
-# cg50-esp32mod — Casio fx-CG50 Wi-Fi + AI mod
+# cg50-espmod — Casio fx-CG50 Wi-Fi + AI mod
 
 **Mod open source que añade Wi-Fi y asistencia mediante IA a una Casio fx-CG50 usando una XIAO ESP32-C3 integrada por UART.**
 
@@ -9,7 +9,7 @@
 [![Hardware](https://img.shields.io/badge/hardware-XIAO%20ESP32--C3-00bfa5)](hardware/WIRING.md)
 [![Calculator](https://img.shields.io/badge/calculator-Casio%20fx--CG50-2675ff)](#compatibilidad)
 [![License](https://img.shields.io/badge/license-MIT-white)](LICENSE)
-[![Website](https://img.shields.io/badge/website-GitHub%20Pages-26A7F5)](https://samilososami.github.io/cg50-esp32mod/)
+[![Website](https://img.shields.io/badge/website-samilososami.com-222222)](https://samilososami.com/tools/casio/cg50-espmod/)
 
 <img src="docs/images/ui/casiogpt-on-calculator.jpg" alt="CasioGPT funcionando físicamente en una Casio fx-CG50 modificada" width="430">
 
@@ -37,10 +37,10 @@ El repositorio contiene todo el software de esta modificación:
 |---|---|---|
 | **CasioWIFI** | `CASIOWIFI.g3a` | Escanea redes, conecta a redes abiertas o protegidas y muestra el estado de la ESP32 y de Wi-Fi. |
 | **CasioGPT** | `CASIOGPT.g3a` | Chat oscuro tipo mensajería, respuesta incremental, historial corto y cancelación con F6. |
-| **Firmware común** | `cg50-esp32mod-esp32-merged.bin` | Puente UART, Wi-Fi/NVS, TLS y streaming desde Ollama Cloud. Sirve a las dos apps. |
+| **Firmware común** | `cg50-espmod-esp32-merged.bin` | Puente UART, Wi-Fi/NVS, TLS y streaming desde Ollama Cloud. Sirve a las dos apps. |
 
 Los binarios revisados están en [`dist/`](dist/) y también se publican en
-[Releases](https://github.com/samilososami/cg50-esp32mod/releases).
+[Releases](https://github.com/samilososami/cg50-espmod/releases).
 
 ## Arquitectura
 

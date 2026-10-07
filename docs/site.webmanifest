@@ -1,8 +1,8 @@
 {
-  "name": "cg50-esp32mod",
-  "short_name": "cg50-esp32mod",
+  "name": "cg50-espmod",
+  "short_name": "cg50-espmod",
   "description": "Wi-Fi and cloud AI mod for the Casio fx-CG50 using a XIAO ESP32-C3.",
-  "start_url": "/cg50-esp32mod/",
+  "start_url": "/cg50-espmod/",
   "display": "standalone",
   "background_color": "#041423",
   "theme_color": "#041423",

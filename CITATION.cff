@@ -1,12 +1,12 @@
 cff-version: 1.2.0
 message: "If you use or build upon this project, please cite the repository."
-title: "cg50-esp32mod: Wi-Fi and cloud AI for the Casio fx-CG50"
+title: "cg50-espmod: Wi-Fi and cloud AI for the Casio fx-CG50"
 type: software
 authors:
   - family-names: "Gonzalez Kamel"
     given-names: "Sami"
-repository-code: "https://github.com/samilososami/cg50-esp32mod"
-url: "https://samilososami.github.io/cg50-esp32mod/"
+repository-code: "https://github.com/samilososami/cg50-espmod"
+url: "https://samilososami.com/tools/casio/cg50-espmod/"
 license: MIT
 version: 0.1.0
 date-released: 2026-10-07

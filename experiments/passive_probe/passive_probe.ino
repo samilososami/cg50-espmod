@@ -1,5 +1,5 @@
 /*
- * cg50-esp32mod passive UART wiring probe
+ * cg50-espmod passive UART wiring probe
  *
  * Safety invariant: D6 and D7 remain inputs. This firmware never configures
  * them as UART TX or drives either soldered signal line.
@@ -20,7 +20,7 @@ void setup() {
   pinMode(CASIO_LINE_D7, INPUT);
 
   Serial.println();
-  Serial.println("cg50-esp32mod passive probe");
+  Serial.println("cg50-espmod passive probe");
   Serial.println("D6/D7 are INPUT only; no UART transmission is enabled.");
   Serial.println("USB console: 115200 baud");
 }
