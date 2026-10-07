@@ -1,0 +1,30 @@
+# Local credentials. Never commit the real Ollama Cloud key.
+casiogpt_api.txt
+device-secrets/
+.env
+.env.*
+
+# Generated builds and device backups.
+.build/
+.device-backups/
+**/build/
+*.o
+*.d
+*.elf
+*.map
+*.ppm
+
+# App-local outputs are copied into dist/ by tools/build-addins.
+apps/**/*.g3a
+apps/**/*.bin
+
+# Keep the reviewed release artifacts.
+!dist/*.g3a
+!dist/*.bin
+!dist/checksums.txt
+
+# Editor and Python noise.
+__pycache__/
+*.pyc
+.DS_Store
+*~

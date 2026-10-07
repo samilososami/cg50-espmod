@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+mapfile -t files < <(find dist -maxdepth 1 -type f ! -name checksums.txt -printf '%p\n' | LC_ALL=C sort)
+if [[ "${#files[@]}" -eq 0 ]]; then
+  echo "ERROR: dist/ no contiene artefactos" >&2
+  exit 1
+fi
+sha256sum "${files[@]}" > dist/checksums.txt
+cat dist/checksums.txt

@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+PORT="${1:-/dev/ttyACM0}"
+FQBN="esp32:esp32:XIAO_ESP32C3"
+
+if [[ ! -c "$PORT" ]]; then
+  echo "ERROR: no existe el puerto serie $PORT" >&2
+  exit 1
+fi
+
+"$ROOT/tools/build-firmware"
+"$ROOT/tools/arduino-cli" upload \
+  --fqbn "$FQBN" \
+  --input-dir "$ROOT/.build/esp32" \
+  --port "$PORT" \
+  "$ROOT/firmware/casioesp_wifi"
+
+echo "OK: firmware instalado; hostname=casio-cg50, UART 9600 8N1, D7=RX, D6=TX."

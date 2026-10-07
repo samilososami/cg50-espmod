@@ -1,0 +1,409 @@
+{
+  "created_at": "2026-10-07T18:23:39+0200",
+  "models": {
+    "gemma4:31b": {
+      "accessible_with_current_key": true,
+      "error": null,
+      "score": 15,
+      "possible": 15,
+      "successes": 6,
+      "median_first_content_s": 0.379,
+      "median_total_s": 0.716,
+      "thinking_chars": 0,
+      "results": [
+        {
+          "case": "algebra",
+          "ok": true,
+          "first_content_s": 0.378,
+          "total_s": 0.735,
+          "content_chars": 190,
+          "thinking_chars": 0,
+          "score": 1,
+          "possible": 1,
+          "response": "1. Distribuye el 2: 2x - 6 + 4 = 3x - 5.\n2. Simplifica el lado izquierdo: 2x - 2 = 3x - 5.\n3. Mueve las x a un lado restando 2x: -2 = x - 5.\n4. Despeja x sumando 5: 3 = x.\n\nResultado: x = 3."
+        },
+        {
+          "case": "percentage",
+          "ok": true,
+          "first_content_s": 0.353,
+          "total_s": 0.649,
+          "content_chars": 154,
+          "thinking_chars": 0,
+          "score": 2,
+          "possible": 2,
+          "response": "1. Descuento: 80 menos el 15% (12 euros) es igual a 68 euros.\n2. IVA: 68 mas el 21% (14.28 euros) es igual a 82.28 euros.\n\nEl precio final es 82.28 euros."
+        },
+        {
+          "case": "science",
+          "ok": true,
+          "first_content_s": 0.42,
+          "total_s": 0.876,
+          "content_chars": 371,
+          "thinking_chars": 0,
+          "score": 4,
+          "possible": 4,
+          "response": "La sal es polar y sus iones son atraídos por las moléculas de agua, que también son polares. Esta atracción rompe la estructura del cristal de sal y permite que se mezcle uniformemente. El aceite es no polar, por lo que no tiene carga eléctrica que lo atraiga al agua. Al no haber afinidad química, las moléculas de agua se mantienen unidas entre sí y rechazan el aceite."
+        },
+        {
+          "case": "history_language",
+          "ok": true,
+          "first_content_s": 0.67,
+          "total_s": 1.027,
+          "content_chars": 358,
+          "thinking_chars": 0,
+          "score": 3,
+          "possible": 3,
+          "response": "La causa profunda fue la tensión acumulada por el nacionalismo, el imperialismo y las alianzas militares entre potencias. El detonante fue el evento puntual del asesinato del archiduque Francisco Fernando en Sarajevo. Mientras la primera es un proceso lento, el segundo es el hecho que activa el conflicto.\n\nLa oración es una subordinada adverbial concesiva."
+        },
+        {
+          "case": "conversation",
+          "ok": true,
+          "first_content_s": 0.362,
+          "total_s": 0.696,
+          "content_chars": 260,
+          "thinking_chars": 0,
+          "score": 2,
+          "possible": 2,
+          "response": "Es normal sentirse asi, pero recuerda que no puedes aprenderlo todo en una sola noche. Enfocate ahora en los conceptos clave y en descansar bien para que tu mente funcione mañana. Confia en lo que ya sabes y ve paso a paso, que aun puedes aprovechar el tiempo."
+        },
+        {
+          "case": "context",
+          "ok": true,
+          "first_content_s": 0.38,
+          "total_s": 0.584,
+          "content_chars": 86,
+          "thinking_chars": 0,
+          "score": 3,
+          "possible": 3,
+          "response": "Te llamas Nora y tu asignatura favorita es biologia. ¿Que tema estas estudiando ahora?"
+        }
+      ]
+    },
+    "gpt-oss:20b": {
+      "accessible_with_current_key": true,
+      "error": null,
+      "score": 7,
+      "possible": 15,
+      "successes": 4,
+      "median_first_content_s": 1.876,
+      "median_total_s": 2.825,
+      "thinking_chars": 4236,
+      "results": [
+        {
+          "case": "algebra",
+          "ok": true,
+          "first_content_s": 2.627,
+          "total_s": 2.828,
+          "content_chars": 31,
+          "thinking_chars": 562,
+          "score": 0,
+          "possible": 1,
+          "response": "Para resolver  \n\n\\(2(x-3)+4 = 3"
+        },
+        {
+          "case": "percentage",
+          "ok": true,
+          "first_content_s": 1.406,
+          "total_s": 2.445,
+          "content_chars": 239,
+          "thinking_chars": 275,
+          "score": 2,
+          "possible": 2,
+          "response": "Primero se descuenta el 15 %:  \n80 € × 0,15 = 12 € de descuento.  \nPrecio después del descuento: 80 € – 12 € = 68 €.\n\nLuego se añade el IVA del 21 % sobre ese precio:  \n68 € × 0,21 = 14,28 € de IVA.\n\nPrecio final: 68 € + 14,28 € = 82,28 €."
+        },
+        {
+          "case": "science",
+          "ok": true,
+          "first_content_s": 1.765,
+          "total_s": 3.054,
+          "content_chars": 320,
+          "thinking_chars": 581,
+          "score": 3,
+          "possible": 4,
+          "response": "La sal es un compuesto iónico que se separa en iones Na⁺ y Cl⁻. El agua es una molécula polar, con polos positivos y negativos que atraen a los iones y los rodean. Esta atracción supera la energía de enlace del cristal de sal, permitiendo que los iones se dispersen en la solución. El aceite, por otro lado, está formado"
+        },
+        {
+          "case": "history_language",
+          "ok": true,
+          "first_content_s": 1.987,
+          "total_s": 2.823,
+          "content_chars": 328,
+          "thinking_chars": 664,
+          "score": 2,
+          "possible": 3,
+          "response": "La causa profunda de la Primera Guerra Mundial fue el sistema de alianzas y el nacionalismo exacerbado que generó rivalidades entre las grandes potencias. El detonante fue el asesinato del archiduque Francisco Fernando de Austria en Sarajevo, que provocó una cadena de movilizaciones militares. Este hecho desencadenó la guerra,"
+        },
+        {
+          "case": "conversation",
+          "ok": false,
+          "first_content_s": 2.816,
+          "total_s": 2.816,
+          "content_chars": 0,
+          "thinking_chars": 1083,
+          "score": 0,
+          "possible": 2,
+          "response": ""
+        },
+        {
+          "case": "context",
+          "ok": false,
+          "first_content_s": 2.47,
+          "total_s": 2.47,
+          "content_chars": 0,
+          "thinking_chars": 1071,
+          "score": 0,
+          "possible": 3,
+          "response": ""
+        }
+      ]
+    },
+    "gpt-oss:120b": {
+      "accessible_with_current_key": true,
+      "error": null,
+      "score": 12,
+      "possible": 15,
+      "successes": 5,
+      "median_first_content_s": 0.551,
+      "median_total_s": 0.929,
+      "thinking_chars": 1886,
+      "results": [
+        {
+          "case": "algebra",
+          "ok": true,
+          "first_content_s": 0.583,
+          "total_s": 0.929,
+          "content_chars": 235,
+          "thinking_chars": 109,
+          "score": 1,
+          "possible": 1,
+          "response": "2(x − 3)+4 = 3x − 5  \n\n1. Distribuye el 2: 2x − 6 + 4 = 3x − 5.  \n2. Simplifica el lado izquierdo: 2x − 2 = 3x − 5.  \n3. Lleva los términos con x a un lado: 2x − 3x = −5 + 2 → −x = −3.  \n4. Multiplica por −1: x = 3.  \n\nSolución: x = 3."
+        },
+        {
+          "case": "percentage",
+          "ok": true,
+          "first_content_s": 0.636,
+          "total_s": 0.865,
+          "content_chars": 145,
+          "thinking_chars": 287,
+          "score": 2,
+          "possible": 2,
+          "response": "Precio con descuento: 80 € − 15 % = 80 € × 0,85 = 68 €.  \nIVA: 68 € × 21 % = 68 € × 0,21 = 14,28 €.  \nPrecio final: 68 € + 14,28 € = **82,28 €**."
+        },
+        {
+          "case": "science",
+          "ok": true,
+          "first_content_s": 0.453,
+          "total_s": 0.984,
+          "content_chars": 513,
+          "thinking_chars": 169,
+          "score": 4,
+          "possible": 4,
+          "response": "La sal es iónica; sus iones positivos y negativos son atraídos por las moléculas polares del agua, que rodean y separan cada ión.  \nEl agua forma enlaces de hidrógeno con los iones, reduciendo la atracción entre ellos y permitiendo que se dispersen en la solución.  \nEl aceite está compuesto por moléculas no polares que solo interactúan entre sí mediante fuerzas de Van der Waals.  \nAl no haber atracción significativa entre las moléculas polares del agua y las no polares del aceite, este último no se disuelve."
+        },
+        {
+          "case": "history_language",
+          "ok": false,
+          "first_content_s": 1.044,
+          "total_s": 1.044,
+          "content_chars": 0,
+          "thinking_chars": 965,
+          "score": 0,
+          "possible": 3,
+          "response": ""
+        },
+        {
+          "case": "conversation",
+          "ok": true,
+          "first_content_s": 0.489,
+          "total_s": 0.953,
+          "content_chars": 310,
+          "thinking_chars": 114,
+          "score": 2,
+          "possible": 2,
+          "response": "Entiendo el nerviosismo, pero recuerda que has estudiado y sabes más de lo que crees. Repasa los conceptos clave en bloques de 20 min, haz pausas breves y respira profundo antes de cada sesión. Duerme bien esta noche y confía en tu preparación; el examen es solo una oportunidad para demostrar lo que ya sabes."
+        },
+        {
+          "case": "context",
+          "ok": true,
+          "first_content_s": 0.551,
+          "total_s": 0.642,
+          "content_chars": 88,
+          "thinking_chars": 242,
+          "score": 3,
+          "possible": 3,
+          "response": "Te llamas Nora y tu asignatura favorita es biología. ¿Qué tema de biología te gusta más?"
+        }
+      ]
+    },
+    "nemotron-3-nano:30b": {
+      "accessible_with_current_key": true,
+      "error": null,
+      "score": 13,
+      "possible": 15,
+      "successes": 6,
+      "median_first_content_s": 0.342,
+      "median_total_s": 0.71,
+      "thinking_chars": 0,
+      "results": [
+        {
+          "case": "algebra",
+          "ok": true,
+          "first_content_s": 0.364,
+          "total_s": 0.712,
+          "content_chars": 109,
+          "thinking_chars": 0,
+          "score": 1,
+          "possible": 1,
+          "response": "2(x - 3) + 4 = 3x - 5  \n2x - 6 + 4 = 3x - 5  \n2x - 2 = 3x - 5  \n-2 + 5 = 3x - 2x  \n3 = x  \n\nRespuesta: x = 3."
+        },
+        {
+          "case": "percentage",
+          "ok": true,
+          "first_content_s": 0.381,
+          "total_s": 1.045,
+          "content_chars": 262,
+          "thinking_chars": 0,
+          "score": 2,
+          "possible": 2,
+          "response": "El precio final es 73,68 euros.  \nPrimero se aplica el 15 % de descuento: 80 € × 0,85 = 68 €.  \nLuego se añade el 21 % de IVA: 68 € × 1,21 = 82,28 €.  \nRedondeando a dos decimales, el importe final es 73,68 € (si el IVA se calcula sobre el precio con descuento)."
+        },
+        {
+          "case": "science",
+          "ok": true,
+          "first_content_s": 0.32,
+          "total_s": 0.943,
+          "content_chars": 394,
+          "thinking_chars": 0,
+          "score": 4,
+          "possible": 4,
+          "response": "La sal se disuelve porque sus iones están atraídos por las moléculas de agua, que rompen los enlaces del cristal y los separan.  \nEl agua tiene una alta polaridad que permite estabilizar esos iones y mantenerlos en solución.  \nEl aceite es no polar, por lo que no atrae ni separa los iones de la sal.  \nAdemás, sus moléculas no forman enlaces de hidrógeno con el agua, impidiendo su disolución."
+        },
+        {
+          "case": "history_language",
+          "ok": true,
+          "first_content_s": 0.312,
+          "total_s": 0.709,
+          "content_chars": 372,
+          "thinking_chars": 0,
+          "score": 2,
+          "possible": 3,
+          "response": "La causa profunda de la Primera Guerra Mundial fue la rivalidad entre potencias europeas y el sistema de alianzas que obligaba a los países a entrar en conflicto. El detonante fue el asesinato del archiduque Francisco Fernando en Sarajevo, que desencadenó las tensiones existentes.  \n\nAunque llovia, salimos a pasear.  \nSubordinada: causal (explica la razón de la acción)."
+        },
+        {
+          "case": "conversation",
+          "ok": true,
+          "first_content_s": 0.307,
+          "total_s": 0.551,
+          "content_chars": 195,
+          "thinking_chars": 0,
+          "score": 1,
+          "possible": 2,
+          "response": "Respira profundo y repite: \"Puedo hacerlo\".  \nRevisa solo lo esencial, enfócate en entender, no en memorizar.  \nConfía en tu preparación; el nerviosismo muestra que te importa y eso ya es fuerza."
+        },
+        {
+          "case": "context",
+          "ok": true,
+          "first_content_s": 0.396,
+          "total_s": 0.516,
+          "content_chars": 90,
+          "thinking_chars": 0,
+          "score": 3,
+          "possible": 3,
+          "response": "Te llamas Nora y tu asignatura favorita es biología.  \n¿Qué tema de biología te gusta más?"
+        }
+      ]
+    },
+    "nemotron-3-super": {
+      "accessible_with_current_key": true,
+      "error": null,
+      "score": 14,
+      "possible": 15,
+      "successes": 6,
+      "median_first_content_s": 0.615,
+      "median_total_s": 1.933,
+      "thinking_chars": 0,
+      "results": [
+        {
+          "case": "algebra",
+          "ok": true,
+          "first_content_s": 0.699,
+          "total_s": 2.44,
+          "content_chars": 472,
+          "thinking_chars": 0,
+          "score": 1,
+          "possible": 1,
+          "response": "Primero, expande el lado izquierdo:  \n2(x - 3) + 4 = 2x - 6 + 4 = 2x - 2  \n\nLa ecuación queda:  \n2x - 2 = 3x - 5  \n\nAhora, pasa los términos con x a un lado y los números al otro:  \nResta 2x de ambos lados:  \n-2 = x - 5  \n\nSuma 5 a ambos lados:  \n3 = x  \n\nEntonces, la solución es:  \nx = 3  \n\nVerificación:  \nLado izquierdo: 2(3 - 3) + 4 = 2(0) + 4 = 4  \nLado derecho: 3(3) - 5 = 9 - 5 = 4  \nAmbos lados son iguales, por lo que la solución es correcta.  \n\nRespuesta: x = 3"
+        },
+        {
+          "case": "percentage",
+          "ok": true,
+          "first_content_s": 0.535,
+          "total_s": 2.024,
+          "content_chars": 319,
+          "thinking_chars": 0,
+          "score": 2,
+          "possible": 2,
+          "response": "Primero aplico el descuento del 15% al precio original de 80 euros:  \nDescuento = 80 × 0,15 = 12 euros  \nPrecio después del descuento = 80 - 12 = 68 euros  \n\nLuego aplico el IVA del 21% al precio con descuento:  \nIVA = 68 × 0,21 = 14,28 euros  \nPrecio final = 68 + 14,28 = 82,28 euros  \n\nEl precio final es 82,28 euros."
+        },
+        {
+          "case": "science",
+          "ok": true,
+          "first_content_s": 0.638,
+          "total_s": 2.042,
+          "content_chars": 604,
+          "thinking_chars": 0,
+          "score": 4,
+          "possible": 4,
+          "response": "El agua es un solvente polar que atrae y rodea los iones de la sal (Na⁺ y Cl⁻) mediante fuerzas electrostáticas, rompiendo su red cristalina y permitiendo que se disuelva. El aceite, en cambio, es no polar y no puede interactuar eficazmente con los iones cargados de la sal, por lo que no hay fuerzas suficientes para separarlos. Como resultado, la sal no se disuelve en el aceite porque no hay atracción significativa entre sus moléculas y los iones. En resumen, la polaridad del agua permite disolver sustancias iónicas como la sal, mientras que la falta de polaridad del aceite impide esa interacción."
+        },
+        {
+          "case": "history_language",
+          "ok": true,
+          "first_content_s": 0.644,
+          "total_s": 1.843,
+          "content_chars": 588,
+          "thinking_chars": 0,
+          "score": 2,
+          "possible": 3,
+          "response": "La causa profunda de la Primera Guerra Mundial fue el sistema de alianzas, el nacionalismo exacerbado, el imperialismo y la carrera armamentista que generaron tensiones estructurales en Europa durante décadas. El detonante fue el asesinato del archiduque Francisco Fernando de Austria-Hungría en Sarajevo el 28 de junio de 1914, que desencadenó la cadena de declaraciones de guerra. En la oración \"Aunque llovia, salimos a pasear\", la subordinada es una oración subordinada concessiva, introducida por el nexo \"aunque\", que expresa una circunstancia que contrasta con la acción principal."
+        },
+        {
+          "case": "conversation",
+          "ok": true,
+          "first_content_s": 0.541,
+          "total_s": 1.075,
+          "content_chars": 303,
+          "thinking_chars": 0,
+          "score": 2,
+          "possible": 2,
+          "response": "Entiendo que estés nervioso, pero recuerda que ya has estudiado y tienes más conocimiento del que crees. Dedica esta noche a repasar lo esencial, dormir bien y confiar en tu esfuerzo. Mañana, respira profundo, lee cada pregunta con calma y responde lo mejor que puedas — ya estás haciendo lo importante."
+        },
+        {
+          "case": "context",
+          "ok": true,
+          "first_content_s": 0.592,
+          "total_s": 1.576,
+          "content_chars": 90,
+          "thinking_chars": 0,
+          "score": 3,
+          "possible": 3,
+          "response": "Te llamas Nora y tu asignatura favorita es biologia.  \n¿Qué tema de biologia te gusta más?"
+        }
+      ]
+    },
+    "glm-5.3-flash": {
+      "accessible_with_current_key": false,
+      "error": {
+        "http_status": 402,
+        "reason": "Payment Required"
+      },
+      "score": 0,
+      "possible": 0,
+      "successes": 0,
+      "median_first_content_s": null,
+      "median_total_s": null,
+      "thinking_chars": 0,
+      "results": []
+    }
+  }
+}
