@@ -1,5 +1,4 @@
-# Local credentials. Never commit the real Ollama Cloud key.
-casiogpt_api.txt
+# Local credentials and device material.
 device-secrets/
 .env
 .env.*

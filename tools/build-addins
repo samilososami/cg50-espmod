@@ -5,7 +5,7 @@ ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 SDK="${FXCGSDK:-/opt/prizmsdk-linux}"
 
 if [[ "$(id -u)" -eq 0 ]]; then
-  exec runuser -u kali -- env HOME=/home/kali PATH="$PATH" FXCGSDK="$SDK" "$0" "$@"
+  exec runuser -u kali -- env PATH="$PATH" FXCGSDK="$SDK" "$0" "$@"
 fi
 
 if [[ ! -f "$SDK/toolchain/prizm_rules" ]]; then
@@ -15,9 +15,7 @@ fi
 
 export FXCGSDK="$SDK"
 make -C "$ROOT/apps/CasioWIFI" -j2
-make -C "$ROOT/apps/CasioGPT" -j2
 install -d -m 0775 "$ROOT/dist"
 install -m 0664 "$ROOT/apps/CasioWIFI/CASIOWIFI.g3a" "$ROOT/dist/CASIOWIFI.g3a"
-install -m 0664 "$ROOT/apps/CasioGPT/CASIOGPT.g3a" "$ROOT/dist/CASIOGPT.g3a"
 
-sha256sum "$ROOT/dist/CASIOWIFI.g3a" "$ROOT/dist/CASIOGPT.g3a"
+sha256sum "$ROOT/dist/CASIOWIFI.g3a"

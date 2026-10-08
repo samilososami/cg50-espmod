@@ -22,5 +22,4 @@ install:
 
 clean:
 	$(MAKE) -C apps/CasioWIFI clean FXCGSDK=$${FXCGSDK:-/opt/prizmsdk-linux}
-	$(MAKE) -C apps/CasioGPT clean FXCGSDK=$${FXCGSDK:-/opt/prizmsdk-linux}
 	rm -rf .build

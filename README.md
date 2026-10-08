@@ -1,71 +1,75 @@
 <div align="center">
 
-# cg50-espmod — Casio fx-CG50 Wi-Fi + AI mod
+# cg50-espmod
 
-**Mod open source que añade Wi-Fi y asistencia mediante IA a una Casio fx-CG50 usando una XIAO ESP32-C3 integrada por UART.**
+**Wi-Fi real dentro de una Casio fx-CG50 mediante una XIAO ESP32-C3 integrada.**
 
-*Open-source Casio fx-CG50 ESP32 mod with CasioWIFI and CasioGPT `.g3a` add-ins, UART firmware, Wi-Fi management and Ollama Cloud streaming.*
+Mod físico, firmware UART y CasioWIFI: la base abierta para construir
+aplicaciones conectadas sin convertir la calculadora en un terminal pasivo.
 
-[![Hardware](https://img.shields.io/badge/hardware-XIAO%20ESP32--C3-00bfa5)](hardware/WIRING.md)
-[![Calculator](https://img.shields.io/badge/calculator-Casio%20fx--CG50-2675ff)](#compatibilidad)
-[![License](https://img.shields.io/badge/license-MIT-white)](LICENSE)
-[![Website](https://img.shields.io/badge/website-samilososami.com-222222)](https://samilososami.com/tools/casio/cg50-espmod/)
+[![Hardware](https://img.shields.io/badge/hardware-XIAO%20ESP32--C3-00a67e)](hardware/WIRING.md)
+[![Calculator](https://img.shields.io/badge/calculadora-Casio%20fx--CG50-2675ff)](#compatibilidad)
+[![Release](https://img.shields.io/github/v/release/samilososami/cg50-espmod?color=111111)](https://github.com/samilososami/cg50-espmod/releases/latest)
+[![License](https://img.shields.io/badge/licencia-MIT-white)](LICENSE)
+[![Website](https://img.shields.io/badge/web-samilososami.com-222222)](https://samilososami.com/tools/casio/cg50-espmod/)
 
-<img src="docs/images/ui/casiogpt-on-calculator.jpg" alt="CasioGPT funcionando físicamente en una Casio fx-CG50 modificada" width="430">
+<img src="docs/images/hardware/04-xiao-installed-closeup.jpg" alt="XIAO ESP32-C3 instalada dentro de una Casio fx-CG50" width="560">
 
-*CasioGPT funcionando en la calculadora modificada: la CG50 dibuja la interfaz y la ESP32 gestiona Wi-Fi, TLS y la petición al modelo.*
+*La XIAO ESP32-C3 integrada en la placa de la fx-CG50.*
 
 </div>
 
 > [!WARNING]
 > Este proyecto requiere abrir y soldar una calculadora. Puede anular la garantía
 > y una conexión equivocada puede dañar ambos dispositivos. Desconecta pilas y
-> USB antes de soldar, comprueba cada señal con un multímetro y no te fíes del
-> color de un cable ni de una fotografía para identificar un pad.
+> USB antes de soldar, mide cada señal y no uses el color de un cable o una foto
+> como sustituto del pinout comprobado.
 
-## Qué es
+## Qué contiene este repositorio
 
-La fx-CG50 sigue ejecutando add-ins `.g3a` normales, pero delega las tareas que
-no puede realizar —Wi-Fi, HTTPS y la API de IA— en una **Seeed Studio XIAO
-ESP32-C3** montada en su interior. Ambos dispositivos se comunican por el puerto
-serie de 3 pines de la calculadora a **9600 8N1** mediante un protocolo con
-checksum, identificadores de petición, reintentos y transferencia fragmentada.
-
-El repositorio contiene todo el software de esta modificación:
+La fx-CG50 sigue ejecutando add-ins `.g3a` normales. La modificación añade una
+**Seeed Studio XIAO ESP32-C3** que actúa como coprocesador de conectividad: la
+calculadora controla la interfaz y la ESP32 gestiona Wi-Fi, persistencia, TLS y
+servicios de red.
 
 | Componente | Artefacto | Función |
 |---|---|---|
-| **CasioWIFI** | `CASIOWIFI.g3a` | Escanea redes, conecta a redes abiertas o protegidas y muestra el estado de la ESP32 y de Wi-Fi. |
-| **CasioGPT** | `CASIOGPT.g3a` | Chat oscuro tipo mensajería, respuesta incremental, historial corto y cancelación con F6. |
-| **Firmware común** | `cg50-espmod-esp32-merged.bin` | Puente UART, Wi-Fi/NVS, TLS y streaming desde Ollama Cloud. Sirve a las dos apps. |
+| **CasioWIFI** | `CASIOWIFI.g3a` | Escanea redes, conecta a puntos abiertos o WPA personales y muestra el estado del enlace. |
+| **Firmware puente** | `cg50-espmod-esp32-merged.bin` | UART, Wi-Fi, NVS, HTTPS y protocolo extensible para aplicaciones conectadas. |
+| **Mod físico** | [`hardware/WIRING.md`](hardware/WIRING.md) | Pinout, resistencias, alimentación, mediciones y montaje interno. |
 
-Los binarios revisados están en [`dist/`](dist/) y también se publican en
-[Releases](https://github.com/samilososami/cg50-espmod/releases).
+CasioGPT se publica ahora como proyecto independiente, con README, capturas,
+benchmark y releases propios:
+
+<p align="center">
+  <a href="https://github.com/samilososami/CasioGPT"><strong>→ Abrir CasioGPT</strong></a>
+</p>
+
+El firmware de este repositorio mantiene el protocolo necesario para
+CasioGPT, pero su `.g3a`, código y herramientas específicas viven únicamente en
+[`samilososami/CasioGPT`](https://github.com/samilososami/CasioGPT).
 
 ## Arquitectura
 
 ```mermaid
 flowchart LR
-    W[CasioWIFI.g3a] -->|UART 9600 8N1| B[XIAO ESP32-C3]
-    G[CasioGPT.g3a] -->|protocolo v5 con checksum| B
-    B -->|Wi-Fi| R[Router]
-    B -->|HTTPS + NDJSON| O[Ollama Cloud]
-    B -->|hasta 8 redes| N[(NVS)]
-    K[casiogpt_api.txt] -->|solo durante la petición| G
+    W[CASIOWIFI.g3a] -->|UART 9600 8N1| E[XIAO ESP32-C3]
+    A[Add-ins compatibles] -->|frames con checksum| E
+    E -->|Wi-Fi| R[Router]
+    E -->|HTTPS| S[Servicios de red]
+    E -->|hasta 8 redes| N[(NVS)]
 ```
 
-- La interfaz, el teclado y el historial visible viven en la CG50.
+- La interfaz y el teclado viven en la CG50.
 - La ESP32 usa el hostname **`casio-cg50`**.
 - Las redes confirmadas se guardan en NVS para reconexión automática.
-- La API key de CasioGPT **no** se compila en ningún binario ni se guarda en
-  NVS: se lee desde la raíz de la calculadora, se envía a RAM y después se borra.
-- Ollama entrega NDJSON mediante HTTP chunked. El firmware deja que
-  `HTTPClient` retire el framing HTTP y procesa cada línea JSON conforme llega;
-  por eso la respuesta se ve en streaming real y no al terminar.
+- El transporte usa checksum FNV-1a, IDs de petición y reintentos idempotentes.
+- Las operaciones largas son cooperativas: la UI no queda atada a una lectura
+  bloqueante de la ESP32.
 
 ## Cableado exacto
 
-En una XIAO ESP32-C3, este proyecto configura **D7 como RX** y **D6 como TX**:
+En una XIAO ESP32-C3, el firmware configura **D7 como RX** y **D6 como TX**:
 
 ```text
 Casio fx-CG50                         XIAO ESP32-C3
@@ -78,51 +82,49 @@ Alimentación XIAO: USB-C propio
 UART: 9600 baudios, 8 bits, sin paridad, 1 stop bit
 ```
 
-La UART se cruza: **TX de la Casio va al receptor D7 de la ESP32**, y **RX de
-la Casio recibe del transmisor D6**. En el conector TRS de 2,5 mm de Casio:
+La UART se cruza: **TX de la Casio entra en D7/RX** y **RX de la Casio recibe
+desde D6/TX**. En el conector TRS de 2,5 mm:
 
-| Contacto del conector | Señal de la CG50 | Conexión en la XIAO |
+| Contacto | Señal CG50 | XIAO ESP32-C3 |
 |---|---|---|
-| Punta / tip | RX | D6 / TX, mediante 1 kΩ |
-| Anillo / ring | TX | D7 / RX, mediante 1 kΩ |
+| Punta / tip | RX | D6 / TX mediante 1 kΩ |
+| Anillo / ring | TX | D7 / RX mediante 1 kΩ |
 | Cuerpo / sleeve | GND | GND común |
 
-En el montaje fotografiado, GND se tomó del contacto de masa del conector de
-3 pines y la XIAO se alimenta por su propio USB-C. **No conectes las cuatro AAA
-directamente a 3V3 ni a 5V de la XIAO.** La guía completa, con comprobaciones
-antes de soldar, está en [hardware/WIRING.md](hardware/WIRING.md).
+En el montaje fotografiado, la XIAO se alimenta por su propio USB-C. **No
+conectes las cuatro AAA directamente a 3V3 ni a 5V de la XIAO.** Consulta la
+[guía completa](hardware/WIRING.md) antes de soldar.
 
-## Proceso físico del mod
+## El proceso físico
 
-Las fotografías están ordenadas por fase del trabajo. No uses los colores de
-los cables como pinout: la referencia válida es la tabla anterior y las
-mediciones de continuidad de tu unidad.
+Las imágenes siguen el orden real del prototipo y el montaje. Las mediciones de
+continuidad de tu propia unidad son la referencia válida.
 
 <table>
   <tr>
     <td width="50%" valign="top">
-      <img src="docs/images/hardware/01-breadboard-prototype.jpg" alt="Prototipo externo de la CG50 y XIAO sobre protoboard"><br>
-      <b>1. Prototipo externo.</b> Primera comunicación con la XIAO fuera de la calculadora y alimentada por USB.
+      <img src="docs/images/hardware/01-breadboard-prototype.jpg" alt="Prototipo externo de la CG50 y la XIAO"><br>
+      <b>1. Prototipo externo.</b> Comunicación inicial con la XIAO fuera de la calculadora.
     </td>
     <td width="50%" valign="top">
       <img src="docs/images/hardware/02-probing-open-calculator.jpg" alt="CG50 abierta durante la identificación de señales"><br>
-      <b>2. Identificación.</b> Calculadora abierta para localizar masa y los contactos del puerto serie antes de soldar.
+      <b>2. Identificación.</b> Localización de masa y contactos del puerto serie.
     </td>
   </tr>
   <tr>
     <td width="50%" valign="top">
-      <img src="docs/images/hardware/03-soldering-and-measurement.jpg" alt="Mediciones eléctricas con multímetro sobre la CG50 abierta"><br>
-      <b>3. Comprobaciones eléctricas.</b> Continuidad, tensión en reposo y ausencia de cortocircuitos con multímetro.
+      <img src="docs/images/hardware/03-soldering-and-measurement.jpg" alt="Mediciones eléctricas sobre la CG50"><br>
+      <b>3. Comprobaciones.</b> Continuidad, tensión en reposo y ausencia de cortos.
     </td>
     <td width="50%" valign="top">
-      <img src="docs/images/hardware/04-xiao-installed-closeup.jpg" alt="Primer plano de la XIAO ESP32-C3 soldada dentro de la CG50"><br>
-      <b>4. Cableado definitivo.</b> Primer plano de la XIAO instalada, con masa común y las dos líneas UART protegidas en serie.
+      <img src="docs/images/hardware/04-xiao-installed-closeup.jpg" alt="Primer plano de la XIAO instalada"><br>
+      <b>4. Cableado definitivo.</b> Masa común y las dos líneas UART protegidas.
     </td>
   </tr>
   <tr>
     <td colspan="2" align="center" valign="top">
-      <img src="docs/images/hardware/05-final-internal-layout.jpg" alt="Distribución interna final de la XIAO ESP32-C3 dentro de la CG50" width="430"><br>
-      <b>5. Integración final.</b> Posición interna de la XIAO y acceso a su USB-C para alimentación y flasheo.
+      <img src="docs/images/hardware/05-final-internal-layout.jpg" alt="Distribución interna final" width="430"><br>
+      <b>5. Integración final.</b> Posición de la XIAO y acceso a su USB-C.
     </td>
   </tr>
 </table>
@@ -134,134 +136,119 @@ mediciones de continuidad de tu unidad.
   <img src="docs/images/ui/casiowifi/password.png" alt="Entrada de contraseña en CasioWIFI" width="47%">
 </p>
 
-- **F1:** iniciar un escaneo; flechas para recorrer las redes.
-- **EXE:** conectar a la red seleccionada. Si está protegida, abre el editor de
-  contraseña; si está abierta, conecta directamente.
-- **F2:** alternar minúsculas/mayúsculas en el editor.
-- **F3:** selector de símbolos.
-- **F6:** cancelar la operación o volver desde contraseña/error.
-- **EXIT/MENU:** cerrar UART y salir limpiamente al menú.
+- **F1:** escanear; flechas para recorrer las redes.
+- **EXE:** conectar a la red seleccionada.
+- **F2:** alternar minúsculas y mayúsculas al escribir una clave.
+- **F3:** abrir el selector de símbolos.
+- **F6:** cancelar o volver desde contraseña/error.
+- **EXIT/MENU:** cerrar UART y salir al menú.
 
-Un candado identifica las redes protegidas y `FREE` las abiertas. La red activa
-lleva su propio icono. La ESP32 conserva hasta las ocho redes conectadas más
-recientemente; solo guarda una clave después de confirmar la conexión.
+Un candado identifica redes protegidas y `FREE` las abiertas. La ESP32 guarda
+como máximo las ocho redes conectadas más recientemente y solo persiste una
+clave después de confirmar la asociación.
 
-## CasioGPT
+### Reparación del escaneo y reconexión
 
-<p align="center">
-  <img src="docs/images/ui/casiogpt.png" alt="Render nativo de la interfaz CasioGPT" width="720">
-</p>
+La versión actual arbitra en un único planificador los escaneos, conexiones y
+reconexiones. Cancela asociaciones huérfanas antes de escanear, reintenta el
+inicio de radio de forma acotada y conserva el error visible aunque llegue una
+consulta de estado en segundo plano. La corrección se validó con 100 escaneos
+simulados y con escaneos repetidos sobre la placa real. El informe técnico está
+en [`docs/wifi-scan-repair-2026-10-08.md`](docs/wifi-scan-repair-2026-10-08.md).
 
-1. Crea `casiogpt_api.txt` en la raíz de la calculadora y pega dentro únicamente
-   tu API key de Ollama Cloud. Puedes partir de
-   [`casiogpt_api.example.txt`](casiogpt_api.example.txt).
-2. Conecta primero la red desde CasioWIFI.
-3. Abre CasioGPT. La app valida localmente el archivo, comprueba la ESP32 y
-   verifica Internet antes de mostrar el chat.
-4. Escribe y pulsa **EXE**. La respuesta aparece fragmento a fragmento.
-
-Controles principales:
-
-- **SHIFT + ALPHA:** bloqueo alfabético de la calculadora.
-- **F2:** mayúsculas.
-- **F6:** cancelar una respuesta en curso.
-- **Arriba/abajo:** desplazarse por la conversación.
-- Se puede seguir escribiendo mientras llega la respuesta, pero no enviar otro
-  mensaje hasta que termine o se cancele.
-
-El firmware de esta versión usa `gemma4:31b`, `think: false`, temperatura `0.10`
-y un máximo de 220 tokens. La disponibilidad, velocidad y cuota del modelo
-dependen de Ollama Cloud. CasioGPT es el nombre del cliente; no usa la API de
-OpenAI ni pretende ser una aplicación oficial de ChatGPT.
-
-## Instalación rápida
+## Instalación
 
 ### 1. Firmware de la ESP32
 
-La vía reproducible compila y flashea desde el código:
+La ruta reproducible compila y flashea desde fuente:
 
 ```bash
 ./tools/flash-esp32 /dev/ttyACM0
 ```
 
-También se publica una imagen fusionada en Releases. Se flashea desde offset
-`0x0` con una herramienta compatible con ESP32-C3; la compilación desde fuente
-es la opción recomendada porque valida la placa y las dependencias instaladas.
+También se publica una imagen fusionada en
+[Releases](https://github.com/samilososami/cg50-espmod/releases/latest), preparada
+para flashearse desde `0x0` en una XIAO ESP32-C3.
 
-### 2. Add-ins de la calculadora
+### 2. CasioWIFI
 
-Copia `CASIOWIFI.g3a` y `CASIOGPT.g3a` desde `dist/` a la raíz de la unidad USB
-de la CG50. En la máquina de desarrollo de este proyecto también puede hacerse
-con copia verificada y backup automático:
+Copia `CASIOWIFI.g3a` desde `dist/` a la raíz de la unidad USB de la CG50. En
+el entorno de desarrollo puede instalarse con backup y verificación SHA-256:
 
 ```bash
-cp casiogpt_api.example.txt casiogpt_api.txt
-# Sustituye el contenido local por tu clave; el archivo está ignorado por Git.
-./tools/install-calculator
+make install
 ```
 
-Si `casiogpt_api.txt` no existe, el instalador copia igualmente ambos add-ins y
-avisa de que CasioGPT todavía no tiene credencial.
+El instalador solo reemplaza CasioWIFI y sus nombres antiguos; no toca
+CasioGPT ni otros add-ins.
+
+### 3. Aplicaciones opcionales
+
+Instala CasioGPT desde su
+[repositorio independiente](https://github.com/samilososami/CasioGPT/releases/latest).
+El firmware puente de este proyecto sigue siendo la base compartida.
 
 ## Compilar y probar
 
 Requisitos principales:
 
-- PrizmSDK en `/opt/prizmsdk-linux` o en `$FXCGSDK`.
-- `arduino-cli`, core `esp32:esp32` y librería `ArduinoJson`.
-- GCC/G++, Python 3 y Pillow para las pruebas/activos.
+- PrizmSDK en `/opt/prizmsdk-linux` o `$FXCGSDK`.
+- `arduino-cli`, core `esp32:esp32` y `ArduinoJson`.
+- GCC/G++, Python 3 y Pillow para pruebas y capturas.
 
 ```bash
-make test       # simulación UART, Wi-Fi/NVS, streaming, UI y secretos
-make addins     # genera los dos .g3a
-make firmware   # genera firmware de aplicación y binario fusionado
-make checksums  # actualiza dist/checksums.txt
+make test       # UART, Wi-Fi/NVS, firmware, UI y secretos
+make addins     # genera dist/CASIOWIFI.g3a
+make firmware   # genera las dos imágenes ESP32
+make checksums  # hashes verificables desde la carpeta dist
 make all
 ```
 
-Los scripts se pueden ejecutar tanto como usuario `kali` como `root`; al entrar
-como root reutilizan de forma explícita el toolchain y la caché Arduino de
-`kali`, evitando dos instalaciones divergentes. Consulta
-[docs/BUILDING.md](docs/BUILDING.md) para el entorno completo y las verificaciones.
+Los scripts funcionan como el usuario `kali` y con UID 0. Cuando se ejecutan
+como root, la compilación se reanuda como `kali` para compartir un único
+toolchain y evitar artefactos propiedad de root. Consulta
+[`docs/BUILDING.md`](docs/BUILDING.md) para el flujo completo.
 
 ## Fiabilidad y seguridad
 
 - Frames delimitados y checksum FNV-1a de 32 bits.
-- IDs de petición para descartar respuestas antiguas y reintentos idempotentes.
-- Envíos UART de hasta 8 bytes espaciados para tolerar el receptor de la CG50.
-- Escaneo, conexión y HTTPS asíncronos: la UI no depende de bloquearse esperando
-  a la ESP32.
-- Streaming ordenado por offsets; una repetición no duplica texto.
-- La clave se borra de RAM al terminar/cancelar y existe una prueba automática
-  que busca credenciales en fuentes y binarios.
-- Las claves Wi-Fi sí se almacenan en NVS para reconectar; en esta configuración
-  NVS no está cifrada.
+- IDs monotónicos para descartar respuestas antiguas.
+- Escrituras UART pequeñas y espaciadas para el receptor de la CG50.
+- Reintentos sin duplicar escaneos ni fragmentos.
+- Un único propietario cooperativo de la radio para SCAN, JOIN y reconexión.
+- Las contraseñas Wi-Fi se guardan en NVS; en esta configuración NVS no está
+  cifrada.
+- El código de funciones cloud permanece en el firmware para los clientes
+  compatibles, pero ninguna API key se compila en los binarios.
 
-El protocolo completo está documentado en [docs/PROTOCOL.md](docs/PROTOCOL.md).
+El protocolo completo está en [`docs/PROTOCOL.md`](docs/PROTOCOL.md).
 
 ## Compatibilidad
 
-Se ha desarrollado y probado físicamente en una **Casio fx-CG50** con pantalla
-de 384×216 y una **XIAO ESP32-C3**. Otros modelos Prizm en color podrían aceptar
-un `.g3a`, pero no se consideran compatibles sin prueba real: pueden cambiar
-resolución, syscalls, distribución de memoria, puerto serie o ciclo de salida.
-Incluso si arrancan, parte de la interfaz puede quedar cortada o descolocada.
+Desarrollado y probado físicamente en una **Casio fx-CG50** de 384×216 y una
+**Seeed Studio XIAO ESP32-C3**. Otros modelos Prizm podrían aceptar un `.g3a`,
+pero no se consideran compatibles sin prueba real: pueden cambiar resolución,
+syscalls, memoria, puerto serie o ciclo de salida. Incluso si arrancan, parte de
+la interfaz podría quedar cortada o descolocada.
 
 ## Estructura
 
 ```text
-apps/CasioWIFI/             código y activos del gestor Wi-Fi
-apps/CasioGPT/              código y activos del chat
-firmware/casioesp_wifi/     firmware único para la XIAO ESP32-C3
-hardware/WIRING.md          soldadura, señales y comprobaciones
+apps/CasioWIFI/             gestor Wi-Fi para la calculadora
+firmware/casioesp_wifi/     firmware puente de la XIAO ESP32-C3
+hardware/WIRING.md          pinout, soldadura y comprobaciones
 docs/PROTOCOL.md            protocolo UART completo
-tests/                      pruebas de host con mocks y sanitizadores
-verification/               sonda física Wi-Fi/TLS/Ollama
-dist/                       .g3a, firmware y checksums publicados
+tests/                      mocks, transporte, radio y renders
+experiments/                sondas pasivas conservadas
+dist/                       G3A, firmware y checksums publicados
 ```
+
+## Proyectos construidos sobre el mod
+
+- **[CasioGPT](https://github.com/samilososami/CasioGPT):** conversación con IA
+  en streaming desde Ollama Cloud, con repositorio y releases propios.
 
 ## Licencia
 
-Código publicado bajo [MIT](LICENSE). Las marcas Casio, ChatGPT, Ollama y Seeed
-pertenecen a sus respectivos propietarios; este es un proyecto independiente y
-no oficial.
+Código bajo [MIT](LICENSE). Las marcas Casio, Ollama y Seeed pertenecen a sus
+respectivos propietarios; este es un proyecto independiente y no oficial.

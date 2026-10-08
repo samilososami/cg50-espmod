@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install both add-ins and, optionally, a local CasioGPT API-key file.
+"""Install CasioWIFI using a verified, recoverable copy.
 
 The copy is transactional per file: write a temporary file, fsync, verify the
 SHA-256 digest, then rename it into place. Existing add-ins are backed up.
@@ -43,25 +43,13 @@ def load_casio_helper():
     return module
 
 
-def resolve_key() -> Path | None:
-    configured = os.environ.get("CASIOGPT_API_FILE")
-    candidate = Path(configured).expanduser() if configured else ROOT / "casiogpt_api.txt"
-    return candidate.resolve() if candidate.is_file() else None
-
-
 def build_addins() -> None:
     subprocess.run([str(ROOT / "tools/build-addins")], check=True)
 
 
 def main() -> int:
     build_addins()
-    sources: list[tuple[Path, str, bool]] = [
-        (DIST / "CASIOWIFI.g3a", "CASIOWIFI.g3a", False),
-        (DIST / "CASIOGPT.g3a", "CASIOGPT.g3a", False),
-    ]
-    key = resolve_key()
-    if key:
-        sources.append((key, "casiogpt_api.txt", True))
+    sources: list[tuple[Path, str]] = [(DIST / "CASIOWIFI.g3a", "CASIOWIFI.g3a")]
 
     helper = load_casio_helper()
     targets = helper.find_casio_targets()
@@ -78,14 +66,14 @@ def main() -> int:
     try:
         mountpoint, mounted_by_us = helper.mount_target(target)
         device_root = Path(mountpoint)
-        for old_name in ("CASIOESP.g3a", "CWIFI.g3a", "CASIOWIFI.g3a", "CASIOGPT.g3a"):
+        for old_name in ("CASIOESP.g3a", "CWIFI.g3a", "CASIOWIFI.g3a"):
             old = device_root / old_name
             if old.is_file():
                 backup_dir.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(old, backup_dir / old.name)
                 old.unlink()
 
-        for source, target_name, secret in sources:
+        for source, target_name in sources:
             destination = device_root / target_name
             temporary = device_root / f".{target_name}.tmp"
             shutil.copyfile(source, temporary)
@@ -94,13 +82,7 @@ def main() -> int:
                 raise RuntimeError(f"La verificacion de {target_name} ha fallado")
             temporary.replace(destination)
             os.sync()
-            if secret:
-                print("OK: casiogpt_api.txt instalado sin mostrar su contenido")
-            else:
-                print(f"OK: {target_name} ({source.stat().st_size / 1_000_000:.3f} MB)")
-
-        if not key:
-            print("AVISO: no se instalo casiogpt_api.txt; copia tu clave local si usaras CasioGPT.")
+            print(f"OK: {target_name} ({source.stat().st_size / 1_000_000:.3f} MB)")
         free_mb = shutil.disk_usage(device_root).free / 1_000_000
         print(f"Espacio libre restante: {free_mb:.2f} MB")
     finally:

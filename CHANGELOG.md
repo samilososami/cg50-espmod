@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.1.1 — 2026-10-08
+
+- CasioGPT pasa a su repositorio independiente: `samilososami/CasioGPT`.
+- El repositorio base queda centrado en hardware, CasioWIFI y firmware puente.
+- Reparado el conflicto entre reconexión automática y escaneo Wi-Fi.
+- Añadidos reintentos acotados, cancelación limpia y conservación de errores.
+- Instalador limitado a CasioWIFI: ya no modifica otros add-ins ni credenciales.
+- Checksums de release directamente verificables desde `dist/`.
+- Documentación, web y metadatos actualizados para la nueva separación.
+
 ## v0.1.0 — 2026-10-07
 
 Primera publicación completa del mod:

@@ -1,8 +1,8 @@
 # Protocolo UART v5
 
-CasioWIFI y CasioGPT comparten el mismo transporte. La fx-CG50 inicia todas las
-operaciones y la XIAO ESP32-C3 responde sin bloquear la interfaz de la
-calculadora.
+CasioWIFI y los clientes construidos sobre `cg50-espmod` comparten el mismo
+transporte. La fx-CG50 inicia todas las operaciones y la XIAO ESP32-C3 responde
+sin bloquear la interfaz de la calculadora.
 
 ## Capa física
 
@@ -66,6 +66,10 @@ NET_GET:<id>   -> NET_WAIT:<id> | NET_DONE:<id> | NET_ERROR:<id>:<motivo>
 La ESP32 comprueba HTTPS contra Ollama sin bloquear el loop UART.
 
 ## CasioGPT
+
+El cliente se publica en el repositorio independiente
+[`samilososami/CasioGPT`](https://github.com/samilososami/CasioGPT). El firmware
+base conserva estas operaciones para mantener la compatibilidad.
 
 Una consulta se carga por fragmentos para que la API key y el prompt no tengan
 que caber en un único frame:

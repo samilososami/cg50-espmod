@@ -4,7 +4,7 @@ set -euo pipefail
 # Root and kali intentionally share kali's Arduino board packages and cache.
 # This avoids maintaining two subtly different ESP32 toolchains.
 if [[ "$(id -u)" -eq 0 ]]; then
-  exec runuser -u kali -- env HOME=/home/kali PATH="$PATH" arduino-cli "$@"
+  exec runuser -u kali -- env PATH="$PATH" arduino-cli "$@"
 fi
 
 exec arduino-cli "$@"

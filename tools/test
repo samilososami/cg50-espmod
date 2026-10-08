@@ -5,7 +5,7 @@ ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT="$ROOT/.build/tests"
 
 if [[ "$(id -u)" -eq 0 ]]; then
-  exec runuser -u kali -- env HOME=/home/kali PATH="$PATH" "$0" "$@"
+  exec runuser -u kali -- env PATH="$PATH" "$0" "$@"
 fi
 
 mkdir -p "$OUT"
@@ -30,32 +30,20 @@ g++ -std=c++17 -O1 -g -fsanitize=address,undefined \
   "$ROOT/tests/firmware/firmware_test.cpp" \
   -o "$OUT/firmware"
 
-cc -std=gnu11 -O1 -g -fsanitize=address,undefined \
-  -ffunction-sections -fdata-sections \
-  -I"$ROOT/firmware/casioesp_wifi" \
-  -idirafter /opt/prizmsdk-linux/include \
-  "$ROOT/tests/casiogpt/render_ui_test.c" \
-  -Wl,--gc-sections -o "$OUT/casiogpt-ui"
-
 "$OUT/casiowifi-transport"
 "$OUT/casiowifi-ui" "$OUT/casiowifi-previews"
 "$OUT/firmware"
-"$OUT/casiogpt-ui" "$OUT/casiogpt-ui.ppm"
 
-python3 - "$OUT/casiogpt-ui.ppm" "$OUT/casiowifi-previews" <<'PY'
+python3 - "$OUT/casiowifi-previews" <<'PY'
 from pathlib import Path
 import sys
 from PIL import Image
 
-path = Path(sys.argv[1])
-image = Image.open(path)
-assert image.size == (384, 216)
-preview_dir = Path(sys.argv[2])
+preview_dir = Path(sys.argv[1])
 previews = sorted(preview_dir.glob("*.ppm"))
 assert len(previews) == 7
 for preview in previews:
     assert Image.open(preview).size == (384, 216)
-print("PASS render: CasioGPT produce una imagen nativa de 384x216.")
 print("PASS render: las siete pantallas CasioWIFI son nativas de 384x216.")
 PY
 

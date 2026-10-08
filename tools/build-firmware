@@ -7,7 +7,7 @@ BUILD="$ROOT/.build/esp32"
 SKETCH="$ROOT/firmware/casioesp_wifi"
 
 if [[ "$(id -u)" -eq 0 ]]; then
-  exec runuser -u kali -- env HOME=/home/kali PATH="$PATH" "$0" "$@"
+  exec runuser -u kali -- env PATH="$PATH" "$0" "$@"
 fi
 
 mkdir -p "$BUILD" "$ROOT/dist"
