@@ -16,6 +16,7 @@ HardwareSerial Casio(1);
 static const int MAX_NETWORKS=32, SAVED_MAX=8;
 static const size_t GPT_KEY_MAX=160, GPT_PROMPT_MAX=512, GPT_OUTPUT_MAX=6144;
 static const int GPT_HISTORY_MAX=6, GPT_HISTORY_TEXT=1024;
+static const int NET_VERIFY_ATTEMPTS=10;
 static const char *GPT_MODEL="gemma4:31b";
 static const char *WIFI_HOSTNAME="casio-cg50";
 static const int TX_QUEUE_CAP=6;
@@ -50,7 +51,8 @@ uint8_t joinAuth=0;
 const char *joinError="OK";
 
 enum { GPT_IDLE, GPT_UPLOAD, GPT_RUNNING, GPT_DONE, GPT_FAILED, GPT_CANCELLED };
-volatile int gptState=GPT_IDLE, netState=0;
+enum { NET_FAILURE_NONE, NET_FAILURE_NO_WIFI, NET_FAILURE_NETWORK };
+volatile int gptState=GPT_IDLE, netState=0, netAttempt=0, netFailure=NET_FAILURE_NONE;
 volatile bool gptCancel=false;
 uint32_t gptId=0, netId=0;
 size_t gptKeyExpected=0, gptPromptExpected=0, gptKeyUsed=0, gptPromptUsed=0;
@@ -419,12 +421,28 @@ public:
 
 static void netWorker(void *)
 {
-    WiFiClientSecure client; HTTPClient http;
-    client.setCACert(GTS_ROOT_R1); client.setTimeout(15000);
-    bool begun=http.begin(client,"https://ollama.com/api/tags");
-    int code=begun ? http.GET() : -1;
-    netState=code>0 ? 2 : 3;
-    http.end(); client.stop(); netTaskHandle=nullptr; vTaskDelete(nullptr);
+    bool success=false,sawWifi=false;
+    for(int attempt=1;attempt<=NET_VERIFY_ATTEMPTS;attempt++) {
+        netAttempt=attempt;
+        if(WiFi.status()!=WL_CONNECTED) {
+            netFailure=NET_FAILURE_NO_WIFI;
+            delay(900);
+            continue;
+        }
+        sawWifi=true;
+        WiFiClientSecure client; HTTPClient http;
+        client.setCACert(GTS_ROOT_R1);client.setTimeout(8000);client.setHandshakeTimeout(8);
+        http.setReuse(false);http.setConnectTimeout(5000);http.setTimeout(8000);
+        bool begun=http.begin(client,"https://ollama.com/api/tags");
+        int code=begun ? http.GET() : -1;
+        http.end();client.stop();
+        if(code>0){success=true;break;}
+        netFailure=NET_FAILURE_NETWORK;
+        if(attempt<NET_VERIFY_ATTEMPTS)delay(250+attempt*75);
+    }
+    if(success){netFailure=NET_FAILURE_NONE;netState=2;}
+    else {netFailure=sawWifi?NET_FAILURE_NETWORK:NET_FAILURE_NO_WIFI;netState=3;}
+    netTaskHandle=nullptr;vTaskDelete(nullptr);
 }
 static void gptWorker(void *)
 {
@@ -492,7 +510,19 @@ static bool startGptWorker()
     return xTaskCreate(gptWorker,"casiogpt",24576,nullptr,1,&gptTaskHandle)==pdPASS;
 }
 #else
-static bool startNetWorker() { netState=2; return true; }
+int hostNetFailures=0;
+static bool startNetWorker()
+{
+    bool sawWifi=false;
+    for(int attempt=1;attempt<=NET_VERIFY_ATTEMPTS;attempt++) {
+        netAttempt=attempt;
+        if(WiFi.status()!=WL_CONNECTED){netFailure=NET_FAILURE_NO_WIFI;continue;}
+        sawWifi=true;
+        if(hostNetFailures>0){hostNetFailures--;netFailure=NET_FAILURE_NETWORK;continue;}
+        netFailure=NET_FAILURE_NONE;netState=2;return true;
+    }
+    netFailure=sawWifi?NET_FAILURE_NETWORK:NET_FAILURE_NO_WIFI;netState=3;return true;
+}
 static bool startGptWorker()
 {
     appendOutputText("Test response"); addHistory('u',gptPrompt); addHistory('a',gptOutput);
@@ -501,18 +531,25 @@ static bool startGptWorker()
 }
 #endif
 
+static void netReplyState(uint32_t id)
+{
+    if(netState==1){char progress[32];snprintf(progress,sizeof(progress),"%d:%d",netAttempt,NET_VERIFY_ATTEMPTS);gptReply("NET_WAIT",id,progress);}
+    else if(netState==2)gptReply("NET_DONE",id,"");
+    else gptReply("NET_ERROR",id,netFailure==NET_FAILURE_NO_WIFI?"NO_WIFI":"NETWORK");
+}
 static void netCommand(const char *verb,uint32_t id)
 {
     if(!strcmp(verb,"NET_BEGIN")) {
-        if(netId==id && netState) { gptReply(netState==1 ? "NET_WAIT" : netState==2 ? "NET_DONE" : "NET_ERROR",id,""); return; }
-        if(WiFi.status()!=WL_CONNECTED) { gptReply("NET_ERROR",id,"NO_WIFI"); return; }
-        if(netState==1) { gptReply("NET_ERROR",id,"BUSY"); return; }
-        netId=id; netState=1;
-        if(!startNetWorker()) netState=3;
-        gptReply(netState==1 ? "NET_WAIT" : netState==2 ? "NET_DONE" : "NET_ERROR",id,"");
+        if(netId==id && netState) { netReplyState(id); return; }
+        if(netState==1) { netId=id; netReplyState(id); return; }
+        if(WiFi.status()!=WL_CONNECTED && savedCount>0 && !scanRunning && !joinRunning && !reconnectRunning)
+            beginSavedReconnect();
+        netId=id;netAttempt=0;netFailure=NET_FAILURE_NONE;netState=1;
+        if(!startNetWorker()){netFailure=NET_FAILURE_NETWORK;netState=3;}
+        netReplyState(id);
     } else {
         if(id!=netId || !netState) { gptReply("NET_ERROR",id,"SESSION"); return; }
-        gptReply(netState==1 ? "NET_WAIT" : netState==2 ? "NET_DONE" : "NET_ERROR",id,"");
+        netReplyState(id);
     }
 }
 static void gptGet(uint32_t id,const char *offsetText)
@@ -588,7 +625,13 @@ static void handleCommand(char *line)
     if(n<2 || !wire_number(f[1],&id)) return;
     if(!strncmp(f[0],"GPT_",4)) { handleGpt(f,n,id); return; }
     if((!strcmp(f[0],"NET_BEGIN") || !strcmp(f[0],"NET_GET")) && n==2) { netCommand(f[0],id); return; }
-    if(n==2 && !strcmp(f[0],"STATE")) { linkReply(id); return; }
+    if(n==2 && !strcmp(f[0],"STATE")) {
+        /* A status probe from CasioGPT is also an explicit request to recover
+         * a saved link now, instead of waiting for the background 12 s timer. */
+        if(WiFi.status()!=WL_CONNECTED && savedCount>0 && !scanRunning && !joinRunning && !reconnectRunning && gptState!=GPT_RUNNING)
+            beginSavedReconnect();
+        linkReply(id); return;
+    }
     if(n==2 && !strcmp(f[0],"SCAN")) {
         if(!haveRequest || id!=activeId) { activeId=id; haveRequest=true; beginScan(); }
         else statusReply();

@@ -66,6 +66,8 @@ flowchart LR
 - El transporte usa checksum FNV-1a, IDs de petición y reintentos idempotentes.
 - Las operaciones largas son cooperativas: la UI no queda atada a una lectura
   bloqueante de la ESP32.
+- Una petición de estado o de comprobación HTTPS adelanta la reconexión de una
+  red guardada y la salida a Internet se prueba hasta diez veces.
 
 ## Cableado exacto
 
@@ -215,6 +217,8 @@ toolchain y evitar artefactos propiedad de root. Consulta
 - IDs monotónicos para descartar respuestas antiguas.
 - Escrituras UART pequeñas y espaciadas para el receptor de la CG50.
 - Reintentos sin duplicar escaneos ni fragmentos.
+- Recuperación de Internet en diez intentos con causa final diferenciada entre
+  pérdida de Wi-Fi y fallo de red/TLS.
 - Un único propietario cooperativo de la radio para SCAN, JOIN y reconexión.
 - Las contraseñas Wi-Fi se guardan en NVS; en esta configuración NVS no está
   cifrada.

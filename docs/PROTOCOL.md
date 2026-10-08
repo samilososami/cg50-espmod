@@ -59,11 +59,15 @@ hexadecimal de 64 caracteres.
 ## Comprobación de Internet
 
 ```text
-NET_BEGIN:<id> -> NET_WAIT:<id> | NET_DONE:<id> | NET_ERROR:<id>:<motivo>
-NET_GET:<id>   -> NET_WAIT:<id> | NET_DONE:<id> | NET_ERROR:<id>:<motivo>
+NET_BEGIN:<id> -> NET_WAIT:<id>:<intento>:10 | NET_DONE:<id> | NET_ERROR:<id>:<motivo>
+NET_GET:<id>   -> NET_WAIT:<id>:<intento>:10 | NET_DONE:<id> | NET_ERROR:<id>:<motivo>
 ```
 
-La ESP32 comprueba HTTPS contra Ollama sin bloquear el loop UART.
+La ESP32 comprueba HTTPS contra Ollama en una tarea independiente, sin bloquear
+el loop UART. Realiza hasta diez intentos; mientras tanto `NET_WAIT` expone el
+progreso. Si el enlace Wi-Fi no está activo, una petición `STATE` o `NET_BEGIN`
+inicia inmediatamente la reconexión con una red guardada. Los motivos finales
+son `NO_WIFI`, `NETWORK` o `SESSION`.
 
 ## CasioGPT
 
@@ -110,6 +114,8 @@ o respuestas corruptas.
 
 - La calculadora reintenta una petición conservando ID.
 - A mitad de los reintentos reabre su UART local.
+- La prueba HTTPS reintenta hasta diez veces y sigue atendiendo UART y al
+  planificador de reconexión durante todo el proceso.
 - La ESP32 elimina duplicados idénticos de la cola de transmisión.
 - Checksum incorrecto, respuesta antigua, índice duplicado u offset fuera de
   orden se descartan sin avanzar el estado visible.

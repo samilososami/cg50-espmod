@@ -1,3 +1,3 @@
 14f483da558e86824c13cae3280db8d22e481e1a36eb25737b6f7a2e8ab4bb6e  CASIOWIFI.g3a
-7e413f23161e3d6031f6d6c2a15cbf526a1e20285af62b8b4507aea019511254  cg50-espmod-esp32-app.bin
-9fae58164ec0684ce2e86eb0e82da8aa24d541ddd07d6477f07f675459a9d4d8  cg50-espmod-esp32-merged.bin
+d69ca86b205cb7e8d0f183077bc726561e278b51d28fdad551cdbe9a45e7b0c1  cg50-espmod-esp32-app.bin
+1ecb285ad694e640e5d25fa3fa14d5cfafe1b1b1b05ccfe19abd751123bfe4b2  cg50-espmod-esp32-merged.bin

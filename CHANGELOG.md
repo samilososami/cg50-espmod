@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.1.2 — 2026-10-08
+
+- Comprobación HTTPS con hasta diez intentos y progreso `NET_WAIT:N:10`.
+- Reconexión inmediata de redes guardadas al recibir `STATE` o `NET_BEGIN`.
+- Errores diferenciados para pérdida de Wi-Fi y fallo de red/TLS.
+- La tarea de verificación deja libre el loop UART y adopta peticiones repetidas
+  sin crear trabajos duplicados.
+- Pruebas de regresión para nueve fallos seguidos, recuperación en el décimo y
+  agotamiento completo.
+
 ## v0.1.1 — 2026-10-08
 
 - CasioGPT pasa a su repositorio independiente: `samilososami/CasioGPT`.

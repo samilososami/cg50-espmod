@@ -119,9 +119,28 @@ int main()
     assert(command("JOIN:1005:100:0:-").find("LINK:1005:1:")==0);
     assert(command("CANCEL:1005")=="LINK:1005:0::OK");
     assert(!joinRunning && !joinPassword[0]);
+    WiFi.connection=WL_DISCONNECTED;WiFi.current="";pauseReconnect();
+    assert(command("STATE:1999")=="LINK:1999:0::OK");
+    assert(reconnectRunning && reconnectBeginPending);
+    advance(201);assert(WiFi.connecting);
     WiFi.connection=WL_CONNECTED; WiFi.current="Home";
+    pollWifiReconnect();
+    hostNetFailures=9;
     assert(command("NET_BEGIN:3000")=="NET_DONE:3000");
+    assert(netAttempt==10 && netFailure==NET_FAILURE_NONE);
     assert(command("NET_GET:3000")=="NET_DONE:3000");
+    hostNetFailures=10;
+    assert(command("NET_BEGIN:3001")=="NET_ERROR:3001:NETWORK");
+    assert(netAttempt==10 && netFailure==NET_FAILURE_NETWORK);
+    WiFi.connection=WL_DISCONNECTED;WiFi.current="";
+    assert(command("NET_BEGIN:3002")=="NET_ERROR:3002:NO_WIFI");
+    assert(netAttempt==10 && netFailure==NET_FAILURE_NO_WIFI);
+    WiFi.connection=WL_CONNECTED;WiFi.current="Home";
+    netState=1;netAttempt=4;netId=3003;
+    assert(command("NET_GET:3003")=="NET_WAIT:3003:4:10");
+    assert(command("NET_BEGIN:3004")=="NET_WAIT:3004:4:10");
+    assert(netId==3004);
+    netState=0;netAttempt=0;netFailure=NET_FAILURE_NONE;
     assert(command("GPT_NEW:3999")=="GPT_ACK:3999:N:0");
     assert(command("GPT_BEGIN:4000:3:2")=="GPT_ACK:4000:B:0");
     assert(command("GPT_KEY:4000:0:6B6579")=="GPT_ACK:4000:K:3");
@@ -138,5 +157,5 @@ int main()
     assert(command("GPT_CANCEL:4001")=="GPT_CANCELLED:4001");
     assert(!gptKey[0] && !gptPrompt[0]);
     scan_regressions();
-    puts("PASS firmware: 100 scans; reconnect/scan arbitration, retries, cancel, timeout, credential preservation; auth/NVS; UART; GPT regression.");
+    puts("PASS firmware: 100 scans; reconnect/scan arbitration; 10-step network recovery; cancel, timeout, credentials; auth/NVS; UART; GPT regression.");
 }
