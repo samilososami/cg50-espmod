@@ -381,11 +381,10 @@ static int tx_length;
 static void finish_error(const char *message)
 {
     int background=busy==3;
-    set_error(message);
+    if(!background) set_error(message);
     busy=waiting=queued=0; uart_ready=0; ui_dirty=1;
     status_time=RTC_GetTicks();
     if(!background) view=VIEW_ERROR;
-    else last_error[0]=0;
     memset(join_payload,0,sizeof(join_payload));
 }
 static unsigned long new_id(void)
@@ -409,7 +408,9 @@ static void queue_request(int kind,int index)
 }
 static int prepare_transaction(int type)
 {
-    busy=waiting=queued=0; last_error[0]=0;
+    busy=waiting=queued=0;
+    /* Background link checks must not erase an error still on screen. */
+    if(type!=3) last_error[0]=0;
     if(!Serial_IsOpen() && !open_uart()) { busy=type; finish_error("No se pudo abrir UART."); return 0; }
     Serial_ClearRX(); memset(&receiver,0,sizeof(receiver));
     request_id=new_id(); expected=received=bad_frames=rx_bytes=0;

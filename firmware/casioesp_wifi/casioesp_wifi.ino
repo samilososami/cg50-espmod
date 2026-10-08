@@ -31,12 +31,18 @@ int foundCount=0, savedCount=0, historyCount=0;
 bool scanRunning=false, scanReady=false, haveRequest=false, storageReady=false;
 wire_rx receiver={};
 uint32_t activeId=0, scanStartedAt=0;
+bool scanBeginPending=false;
+unsigned scanAttempts=0;
+uint32_t scanBeginAt=0;
 TxFrame txQueue[TX_QUEUE_CAP] = {};
 int txHead=0, txTail=0, txCount=0;
 uint32_t txAt=0, rxBytes=0, validFrames=0, damagedFrames=0, txFrames=0, txDropped=0;
 uint32_t lastDiagnostic=0, reportedBytes=0;
 uint32_t joinId=0, joinStartedAt=0, joinBeginAt=0;
 uint32_t reconnectAt=0;
+bool reconnectRunning=false, reconnectBeginPending=false;
+uint32_t reconnectStartedAt=0, reconnectBeginAt=0;
+unsigned reconnectIndex=0;
 bool haveJoin=false, joinRunning=false, joinBeginPending=false;
 int joinPhase=0;
 char joinSsid[33]={}, joinPassword[65]={};
@@ -120,14 +126,36 @@ static bool saveNetwork()
 }
 static void beginSavedReconnect()
 {
-    if(savedCount<=0 || WiFi.status()==WL_CONNECTED) return;
-    WiFi.begin(saved[0].ssid,saved[0].auth==WIFI_AUTH_OPEN ? nullptr : saved[0].password);
+    if(savedCount<=0 || WiFi.status()==WL_CONNECTED || reconnectRunning) return;
+    // One radio owner. Never overwrite an association already in flight.
+    WiFi.disconnectAsync(false,false);
+    reconnectRunning=reconnectBeginPending=true;
+    reconnectBeginAt=millis();
+    reconnectAt=millis();
+}
+static void pauseReconnect()
+{
+    reconnectRunning=reconnectBeginPending=false;
     reconnectAt=millis();
 }
 static void pollWifiReconnect()
 {
-    if(WiFi.status()==WL_CONNECTED) { reconnectAt=millis(); return; }
+    if(WiFi.status()==WL_CONNECTED) { pauseReconnect(); reconnectIndex=0; return; }
     if(savedCount<=0 || scanRunning || joinRunning || gptState==GPT_RUNNING) return;
+    if(reconnectRunning) {
+        if(reconnectBeginPending) {
+            if(millis()-reconnectBeginAt<200) return;
+            reconnectBeginPending=false;
+            unsigned index=reconnectIndex++%(unsigned)savedCount;
+            WiFi.begin(saved[index].ssid,saved[index].auth==WIFI_AUTH_OPEN ? nullptr : saved[index].password);
+            reconnectStartedAt=millis();
+        } else if(millis()-reconnectStartedAt>=20000 ||
+                  (millis()-reconnectStartedAt>=1000 &&
+                   (WiFi.status()==WL_CONNECT_FAILED || WiFi.status()==WL_NO_SSID_AVAIL))) {
+            WiFi.disconnectAsync(false,false); pauseReconnect();
+        }
+        return;
+    }
     if(millis()-reconnectAt>=12000) beginSavedReconnect();
 }
 static void linkReply(uint32_t id)
@@ -165,25 +193,49 @@ static void collectScan(int n)
         if(duplicate>=0) { if(signal>found[duplicate].rssi) found[duplicate].rssi=signal; continue; }
         if(foundCount<MAX_NETWORKS) found[foundCount++]={ssid,signal,auth};
     }
-    sortBySignal(); WiFi.scanDelete(); scanRunning=false; scanReady=true;
+    sortBySignal(); WiFi.scanDelete(); scanRunning=scanBeginPending=false; scanReady=true;
+    reconnectAt=millis();
+}
+static void stopScan()
+{
+    esp_wifi_scan_stop(); WiFi.scanDelete();
+    scanRunning=scanBeginPending=scanReady=false;
+    reconnectAt=millis();
+}
+static void retryScan()
+{
+    if(scanAttempts>=3) { stopScan(); return; }
+    esp_wifi_scan_stop(); WiFi.scanDelete();
+    if(WiFi.status()!=WL_CONNECTED) WiFi.disconnectAsync(false,false);
+    scanBeginPending=true; scanBeginAt=millis();
 }
 static void pollScan()
 {
     if(!scanRunning) return;
+    if(millis()-scanStartedAt>20000) { stopScan(); return; }
+    if(scanBeginPending) {
+        if(millis()-scanBeginAt<200) return;
+        scanBeginPending=false; scanAttempts++;
+        int n=WiFi.scanNetworks(true,true,false,250);
+        if(n>=0) collectScan(n);
+        else if(n==WIFI_SCAN_FAILED) retryScan();
+        return;
+    }
     int n=WiFi.scanComplete();
     if(n>=0) collectScan(n);
-    else if(n==WIFI_SCAN_FAILED || millis()-scanStartedAt>20000) {
-        esp_wifi_scan_stop(); WiFi.scanDelete(); scanRunning=scanReady=false;
-    }
+    else if(n==WIFI_SCAN_FAILED) retryScan();
 }
 static void beginScan()
 {
     if(joinRunning || gptState==GPT_RUNNING) { errorReply(activeId,"BUSY"); return; }
     if(scanRunning) { statusReply(); return; }
+    pauseReconnect();
+    // A disconnected STA may still be trying to associate. That blocks scans
+    // in ESP-IDF. Cancel only that attempt; keep a healthy connection intact.
+    if(WiFi.status()!=WL_CONNECTED) WiFi.disconnectAsync(false,false);
     WiFi.scanDelete(); foundCount=0; scanReady=false;
-    int n=WiFi.scanNetworks(true,true,false,250);
-    scanRunning=n!=WIFI_SCAN_FAILED; scanStartedAt=millis();
-    if(n>=0) collectScan(n);
+    scanRunning=scanBeginPending=true; scanAttempts=0;
+    scanBeginAt=scanStartedAt=millis();
     statusReply();
 }
 static void sendScanResults(int index)
@@ -211,12 +263,13 @@ static void pollJoin()
     int status=WiFi.status();
     if(status==WL_CONNECTED && WiFi.SSID()==joinSsid) {
         joinRunning=false; joinPhase=2;
+        pauseReconnect();
         joinError=saveNetwork() ? "OK" : "SAVE";
         secureZero(joinPassword,sizeof(joinPassword));
     } else if(status==WL_CONNECT_FAILED || status==WL_NO_SSID_AVAIL || millis()-joinStartedAt>20000) {
         joinRunning=false; joinPhase=3;
         joinError=status==WL_NO_SSID_AVAIL ? "NO_AP" : (status==WL_CONNECT_FAILED ? "AUTH" : "TIMEOUT");
-        WiFi.disconnect(false,false); secureZero(joinPassword,sizeof(joinPassword));
+        WiFi.disconnectAsync(false,false); pauseReconnect(); secureZero(joinPassword,sizeof(joinPassword));
     }
 }
 static void startJoin(uint32_t id,uint32_t snapshot,int index,const char *hex)
@@ -241,7 +294,7 @@ static void startJoin(uint32_t id,uint32_t snapshot,int index,const char *hex)
     joinId=id; haveJoin=true; joinAuth=auth; joinPhase=1; joinError="OK";
     strncpy(joinSsid,found[index].ssid.c_str(),32); joinSsid[32]=0;
     memcpy(joinPassword,password,sizeof(password)); secureZero(password,sizeof(password));
-    WiFi.disconnect(false,false);
+    pauseReconnect(); WiFi.disconnectAsync(false,false);
     joinRunning=true; joinBeginPending=true; joinBeginAt=millis();
     linkReply(id);
 }
@@ -551,10 +604,10 @@ static void handleCommand(char *line)
     } else if(n==2 && !strcmp(f[0],"CANCEL")) {
         if(id==joinId && joinRunning) {
             joinRunning=joinBeginPending=false; joinPhase=0; joinError="OK";
-            WiFi.disconnect(false,false); secureZero(joinPassword,sizeof(joinPassword));
+            WiFi.disconnectAsync(false,false); pauseReconnect(); secureZero(joinPassword,sizeof(joinPassword));
         }
         if(id==activeId && scanRunning) {
-            esp_wifi_scan_stop(); WiFi.scanDelete(); scanRunning=scanReady=false;
+            stopScan();
         }
         linkReply(id);
     }
@@ -565,7 +618,9 @@ void setup()
     Casio.setRxBufferSize(1024); Casio.setTxBufferSize(256);
     Casio.begin(9600,SERIAL_8N1,D7,D6);
     WiFi.persistent(false); WiFi.mode(WIFI_STA); WiFi.setHostname(WIFI_HOSTNAME);
-    WiFi.setAutoReconnect(true); WiFi.setSleep(false);
+    // Our cooperative scheduler owns reconnects; driver auto-reconnect must
+    // not race with SCAN, JOIN or CANCEL.
+    WiFi.setAutoReconnect(false); WiFi.setSleep(false);
     loadNetworks();
     if(savedCount>0) beginSavedReconnect();
 }

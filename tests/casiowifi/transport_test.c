@@ -95,6 +95,12 @@ int main(void) {
     begin_scan(); send_all();
     for(int i=0;i<8 && busy;i++) { tick(1601); send_all(); }
     assert(!busy && strstr(last_error,"no llegan bytes"));
+    char preserved_error[sizeof(last_error)]; strcpy(preserved_error,last_error);
+    begin_status(); send_all(); response("LINK",request_id,":0::OK");
+    assert(view==VIEW_ERROR && !strcmp(last_error,preserved_error));
+    begin_status(); send_all();
+    for(int i=0;i<8 && busy;i++) { tick(1601); send_all(); }
+    assert(view==VIEW_ERROR && !strcmp(last_error,preserved_error));
     begin_scan(); send_all(); unsigned long old=request_id;
     cancel_activity(); response("READY",old,":1"); assert(!busy);
     begin_scan();send_all();response("READY",old,":1");assert(busy && !expected);

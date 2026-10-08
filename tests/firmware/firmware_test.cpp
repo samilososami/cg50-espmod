@@ -17,6 +17,55 @@ static std::string command(const char *payload)
     for(unsigned char c:Casio.output) if(wire_feed(&parser,c)==1) result=parser.data;
     return result;
 }
+
+static void advance(unsigned ms) { for(unsigned i=0;i<ms;i++) loop(); }
+static void scan_regressions()
+{
+    assert(!WiFi.autoReconnect && savedCount==2);
+    int writes=flashWrites;
+    WiFi.connection=WL_DISCONNECTED; reconnectIndex=0; pauseReconnect();
+    beginSavedReconnect(); advance(201);
+    assert(WiFi.connecting && WiFi.target==saved[0].ssid);
+    int joins=WiFi.joins;
+    beginSavedReconnect(); advance(500);
+    assert(WiFi.joins==joins); // No overlapping connect/switch.
+
+    assert(command("SCAN:90001")=="WAIT:90001");
+    advance(250);
+    assert(!WiFi.connecting && !reconnectRunning && scanRunning);
+    assert(WiFi.result==WIFI_SCAN_RUNNING);
+    advance(13000); assert(WiFi.joins==joins); // No auto-connect mid-scan.
+    WiFi.result=(int)WiFi.rows.size(); loop(); assert(scanReady);
+    advance(11900); assert(WiFi.joins==joins); // Leave time to select a network.
+    advance(500); assert(WiFi.joins==joins+1 && WiFi.target==saved[1].ssid);
+    advance(20500); assert(!reconnectRunning && !WiFi.connecting);
+    advance(12500); assert(WiFi.target==saved[0].ssid && WiFi.joins==joins+2);
+
+    // Transient radio busy: bounded deferred retries, no tight loop.
+    WiFi.failStarts=2;
+    assert(command("SCAN:90002")=="WAIT:90002");
+    int starts=WiFi.starts;
+    advance(850); assert(WiFi.starts==starts+3 && scanRunning);
+    WiFi.result=(int)WiFi.rows.size(); loop(); assert(scanReady);
+    assert(command("GET:90002:-1").find("READY:90002:")==0);
+    WiFi.failStarts=3;
+    assert(command("SCAN:90003")=="WAIT:90003");
+    advance(850); assert(!scanRunning && !scanReady);
+    assert(command("GET:90003:-1")=="ERROR:90003:SCAN");
+
+    // Cancellation while pending, hung scan timeout, then a fresh successful scan.
+    assert(command("SCAN:90004")=="WAIT:90004");
+    command("CANCEL:90004"); starts=WiFi.starts; advance(500);
+    assert(!scanRunning && !scanBeginPending && WiFi.starts==starts);
+    assert(command("SCAN:90005")=="WAIT:90005");
+    advance(21000); assert(!scanRunning && !scanReady);
+    WiFi.connection=WL_CONNECTED; WiFi.current="Home";
+    int disconnects=WiFi.disconnects;
+    assert(command("SCAN:90006")=="WAIT:90006");
+    advance(250); WiFi.result=(int)WiFi.rows.size(); loop();
+    assert(scanReady && WiFi.status()==WL_CONNECTED && WiFi.disconnects==disconnects);
+    assert(flashWrites==writes && savedCount==2); // Credentials untouched by recovery.
+}
 int main()
 {
     setup();
@@ -24,7 +73,9 @@ int main()
         char start[32],get[32],expected[128];
         snprintf(start,sizeof(start),"SCAN:%d",i); snprintf(get,sizeof(get),"GET:%d:-1",i);
         snprintf(expected,sizeof(expected),"WAIT:%d",i);
-        assert(command(start)==expected); int starts=WiFi.starts;
+        assert(command(start)==expected);
+        while(scanBeginPending) loop();
+        int starts=WiFi.starts;
         assert(command(start)==expected && WiFi.starts==starts);
         assert(command(get)==expected);
         WiFi.rows={{"weak",-90},{"Home",-60},{"Home",-40},{"A:B*C",-70},{"",-20}};
@@ -86,5 +137,6 @@ int main()
     assert(command("GPT_PROMPT:4001:0:627965")=="GPT_ACK:4001:P:3");
     assert(command("GPT_CANCEL:4001")=="GPT_CANCELLED:4001");
     assert(!gptKey[0] && !gptPrompt[0]);
-    puts("PASS firmware: 100 scans; Wi-Fi auth/NVS; idempotent UART; internet state; GPT upload, stream offsets, history and cancellation.");
+    scan_regressions();
+    puts("PASS firmware: 100 scans; reconnect/scan arbitration, retries, cancel, timeout, credential preservation; auth/NVS; UART; GPT regression.");
 }
