@@ -17,6 +17,11 @@ static const int MAX_NETWORKS=32, SAVED_MAX=8;
 static const size_t GPT_KEY_MAX=160, GPT_PROMPT_MAX=512, GPT_OUTPUT_MAX=6144;
 static const int GPT_HISTORY_MAX=6, GPT_HISTORY_TEXT=1024;
 static const int NET_VERIFY_ATTEMPTS=10;
+static const int NET_HTTP_ATTEMPTS=3;
+static const uint32_t NET_WIFI_WAIT_MS=30000;
+static const uint32_t RECONNECT_ATTEMPT_MS=7500;
+static const uint32_t RECONNECT_BETWEEN_MS=250;
+static const uint32_t RECONNECT_CYCLE_MS=3000;
 static const char *GPT_MODEL="gemma4:31b";
 static const char *WIFI_HOSTNAME="casio-cg50";
 static const int TX_QUEUE_CAP=6;
@@ -43,7 +48,9 @@ uint32_t joinId=0, joinStartedAt=0, joinBeginAt=0;
 uint32_t reconnectAt=0;
 bool reconnectRunning=false, reconnectBeginPending=false;
 uint32_t reconnectStartedAt=0, reconnectBeginAt=0;
-unsigned reconnectIndex=0;
+uint32_t reconnectDelay=0;
+unsigned reconnectIndex=0, reconnectTried=0;
+int reconnectCandidate=-1;
 bool haveJoin=false, joinRunning=false, joinBeginPending=false;
 int joinPhase=0;
 char joinSsid[33]={}, joinPassword[65]={};
@@ -126,6 +133,14 @@ static bool saveNetwork()
     saved[0].auth=joinAuth;
     return preferences.putBytes("networks",saved,sizeof(saved))==sizeof(saved);
 }
+static void promoteSavedNetwork(int index)
+{
+    if(index<=0 || index>=savedCount) return;
+    SavedNetwork winner=saved[index];
+    memmove(saved+1,saved,sizeof(saved[0])*index);
+    saved[0]=winner;
+    if(storageReady) preferences.putBytes("networks",saved,sizeof(saved));
+}
 static void beginSavedReconnect()
 {
     if(savedCount<=0 || WiFi.status()==WL_CONNECTED || reconnectRunning) return;
@@ -134,31 +149,45 @@ static void beginSavedReconnect()
     reconnectRunning=reconnectBeginPending=true;
     reconnectBeginAt=millis();
     reconnectAt=millis();
+    reconnectDelay=0;
 }
 static void pauseReconnect()
 {
     reconnectRunning=reconnectBeginPending=false;
     reconnectAt=millis();
+    reconnectDelay=RECONNECT_CYCLE_MS;
+    reconnectCandidate=-1;
 }
 static void pollWifiReconnect()
 {
-    if(WiFi.status()==WL_CONNECTED) { pauseReconnect(); reconnectIndex=0; return; }
+    if(WiFi.status()==WL_CONNECTED) {
+        if(reconnectCandidate>0) promoteSavedNetwork(reconnectCandidate);
+        pauseReconnect(); reconnectIndex=reconnectTried=0; return;
+    }
     if(savedCount<=0 || scanRunning || joinRunning || gptState==GPT_RUNNING) return;
     if(reconnectRunning) {
         if(reconnectBeginPending) {
-            if(millis()-reconnectBeginAt<200) return;
+            if(millis()-reconnectBeginAt<120) return;
             reconnectBeginPending=false;
-            unsigned index=reconnectIndex++%(unsigned)savedCount;
-            WiFi.begin(saved[index].ssid,saved[index].auth==WIFI_AUTH_OPEN ? nullptr : saved[index].password);
+            reconnectCandidate=(int)(reconnectIndex++%(unsigned)savedCount);
+            reconnectTried++;
+            WiFi.begin(saved[reconnectCandidate].ssid,
+                       saved[reconnectCandidate].auth==WIFI_AUTH_OPEN ? nullptr : saved[reconnectCandidate].password);
             reconnectStartedAt=millis();
-        } else if(millis()-reconnectStartedAt>=20000 ||
-                  (millis()-reconnectStartedAt>=1000 &&
+        } else if(millis()-reconnectStartedAt>=RECONNECT_ATTEMPT_MS ||
+                  (millis()-reconnectStartedAt>=700 &&
                    (WiFi.status()==WL_CONNECT_FAILED || WiFi.status()==WL_NO_SSID_AVAIL))) {
-            WiFi.disconnectAsync(false,false); pauseReconnect();
+            WiFi.disconnectAsync(false,false);
+            reconnectRunning=reconnectBeginPending=false;
+            reconnectCandidate=-1;
+            reconnectAt=millis();
+            if(reconnectTried>=(unsigned)savedCount) {
+                reconnectTried=0; reconnectIndex=0; reconnectDelay=RECONNECT_CYCLE_MS;
+            } else reconnectDelay=RECONNECT_BETWEEN_MS;
         }
         return;
     }
-    if(millis()-reconnectAt>=12000) beginSavedReconnect();
+    if(millis()-reconnectAt>=reconnectDelay) beginSavedReconnect();
 }
 static void linkReply(uint32_t id)
 {
@@ -196,13 +225,13 @@ static void collectScan(int n)
         if(foundCount<MAX_NETWORKS) found[foundCount++]={ssid,signal,auth};
     }
     sortBySignal(); WiFi.scanDelete(); scanRunning=scanBeginPending=false; scanReady=true;
-    reconnectAt=millis();
+    reconnectAt=millis(); reconnectDelay=800; reconnectIndex=reconnectTried=0;
 }
 static void stopScan()
 {
     esp_wifi_scan_stop(); WiFi.scanDelete();
     scanRunning=scanBeginPending=scanReady=false;
-    reconnectAt=millis();
+    reconnectAt=millis(); reconnectDelay=800; reconnectIndex=reconnectTried=0;
 }
 static void retryScan()
 {
@@ -218,7 +247,7 @@ static void pollScan()
     if(scanBeginPending) {
         if(millis()-scanBeginAt<200) return;
         scanBeginPending=false; scanAttempts++;
-        int n=WiFi.scanNetworks(true,true,false,250);
+        int n=WiFi.scanNetworks(true,true,false,140);
         if(n>=0) collectScan(n);
         else if(n==WIFI_SCAN_FAILED) retryScan();
         return;
@@ -421,15 +450,18 @@ public:
 
 static void netWorker(void *)
 {
-    bool success=false,sawWifi=false;
-    for(int attempt=1;attempt<=NET_VERIFY_ATTEMPTS;attempt++) {
-        netAttempt=attempt;
-        if(WiFi.status()!=WL_CONNECTED) {
-            netFailure=NET_FAILURE_NO_WIFI;
-            delay(900);
-            continue;
-        }
-        sawWifi=true;
+    bool success=false;
+    uint32_t waitStarted=millis();
+    while(WiFi.status()!=WL_CONNECTED && millis()-waitStarted<NET_WIFI_WAIT_MS) {
+        uint32_t elapsed=millis()-waitStarted;
+        netAttempt=1+(int)(elapsed/(NET_WIFI_WAIT_MS/7));
+        if(netAttempt>7) netAttempt=7;
+        netFailure=NET_FAILURE_NO_WIFI;
+        delay(250);
+    }
+    if(WiFi.status()==WL_CONNECTED) {
+      for(int attempt=1;attempt<=NET_HTTP_ATTEMPTS;attempt++) {
+        netAttempt=7+attempt;
         WiFiClientSecure client; HTTPClient http;
         client.setCACert(GTS_ROOT_R1);client.setTimeout(8000);client.setHandshakeTimeout(8);
         http.setReuse(false);http.setConnectTimeout(5000);http.setTimeout(8000);
@@ -438,10 +470,11 @@ static void netWorker(void *)
         http.end();client.stop();
         if(code>0){success=true;break;}
         netFailure=NET_FAILURE_NETWORK;
-        if(attempt<NET_VERIFY_ATTEMPTS)delay(250+attempt*75);
+        if(attempt<NET_HTTP_ATTEMPTS)delay(350+attempt*150);
+      }
     }
     if(success){netFailure=NET_FAILURE_NONE;netState=2;}
-    else {netFailure=sawWifi?NET_FAILURE_NETWORK:NET_FAILURE_NO_WIFI;netState=3;}
+    else {netFailure=WiFi.status()==WL_CONNECTED?NET_FAILURE_NETWORK:NET_FAILURE_NO_WIFI;netState=3;}
     netTaskHandle=nullptr;vTaskDelete(nullptr);
 }
 static void gptWorker(void *)
@@ -513,15 +546,15 @@ static bool startGptWorker()
 int hostNetFailures=0;
 static bool startNetWorker()
 {
-    bool sawWifi=false;
-    for(int attempt=1;attempt<=NET_VERIFY_ATTEMPTS;attempt++) {
-        netAttempt=attempt;
-        if(WiFi.status()!=WL_CONNECTED){netFailure=NET_FAILURE_NO_WIFI;continue;}
-        sawWifi=true;
+    if(WiFi.status()!=WL_CONNECTED) {
+        netAttempt=7;netFailure=NET_FAILURE_NO_WIFI;netState=3;return true;
+    }
+    for(int attempt=1;attempt<=NET_HTTP_ATTEMPTS;attempt++) {
+        netAttempt=7+attempt;
         if(hostNetFailures>0){hostNetFailures--;netFailure=NET_FAILURE_NETWORK;continue;}
         netFailure=NET_FAILURE_NONE;netState=2;return true;
     }
-    netFailure=sawWifi?NET_FAILURE_NETWORK:NET_FAILURE_NO_WIFI;netState=3;return true;
+    netFailure=NET_FAILURE_NETWORK;netState=3;return true;
 }
 static bool startGptWorker()
 {
@@ -680,8 +713,8 @@ void loop()
     pollScan(); pollJoin(); pollWifiReconnect();
     if(txCount) {
         TxFrame &frame=txQueue[txHead];
-        if(millis()-frame.readyAt>=35 && millis()-txAt>=12) {
-            int chunk=frame.length-frame.offset; if(chunk>8) chunk=8;
+        if(millis()-frame.readyAt>=8 && millis()-txAt>=1) {
+            int chunk=frame.length-frame.offset; if(chunk>32) chunk=32;
             if(Casio.availableForWrite()>=chunk) {
                 frame.offset+=(uint16_t)Casio.write((const uint8_t *)frame.data+frame.offset,chunk);
                 txAt=millis();

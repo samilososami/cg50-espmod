@@ -521,7 +521,7 @@ static void poll_transport(void)
     }
     if(!busy) return;
     if(RTC_Elapsed_ms(scan_time,busy==3 ? 6500 : 35000)) { finish_error("Tiempo de espera agotado."); return; }
-    if(waiting && RTC_Elapsed_ms(request_time,1400)) {
+    if(waiting && RTC_Elapsed_ms(request_time,1100)) {
         if(attempts>=8) {
             finish_error(bad_frames ? "UART: datos danados." : rx_bytes ? "UART: respuesta incompleta." : "UART: no llegan bytes."); return;
         }
@@ -532,10 +532,10 @@ static void poll_transport(void)
         }
         waiting=0; queued=1; tx_offset=0; request_time=RTC_GetTicks();
     }
-    if(!waiting && !queued && RTC_Elapsed_ms(next_poll,300))
+    if(!waiting && !queued && RTC_Elapsed_ms(next_poll,180))
         queue_request(busy==2 ? REQ_JSTATE : REQ_GET,-1);
-    if(queued && RTC_Elapsed_ms(tx_time,12)) {
-        int chunk=tx_length-tx_offset; if(chunk>8) chunk=8;
+    if(queued && RTC_Elapsed_ms(tx_time,2)) {
+        int chunk=tx_length-tx_offset; if(chunk>24) chunk=24;
         if(Serial_PollTX()>=chunk && Serial_Write((const unsigned char *)tx_frame+tx_offset,chunk)==0) {
             tx_offset+=chunk; tx_time=RTC_GetTicks();
             if(tx_offset==tx_length) {

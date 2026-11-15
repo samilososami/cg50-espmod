@@ -67,16 +67,39 @@ transmite** hacia el receptor de la calculadora.
 8. Solo después de una prueba estable, fija la placa y enruta el cable USB sin
    pellizcarlo al cerrar la carcasa.
 
-## Alimentación
+## Alimentación interna sin cable USB
 
-En la revisión documentada, la XIAO usa **su propio USB-C**. La CG50 conserva
-sus cuatro pilas AAA y ambos dispositivos comparten solamente GND y las dos
-señales UART.
+La revisión inicial se alimentaba por USB-C. Para eliminar ese cable, **no uses
+el punto lógico interno de 3,3 V como fuente de la XIAO**: el pin `3V3` de la
+placa XIAO está documentado por Seeed como salida del regulador, y Casio no
+publica margen de corriente de ese rail para picos de Wi-Fi.
 
-No conectes el pack de cuatro AAA directamente a `3V3` ni a `5V` de la XIAO.
-Una futura alimentación interna requeriría un regulador apropiado, margen para
-los picos de Wi-Fi y validación térmica/eléctrica independiente; no forma parte
-de esta versión.
+La topología recomendada es:
+
+```text
+rail de baterías conmutado de la CG50 (aprox. 4,2–6,4 V)
+  -> fusible rearmable 250 mA
+  -> convertidor buck-boost estable a 5,0 V
+  -> diodo Schottky (ánodo: regulador; cátodo: XIAO 5V)
+  -> pin 5V de la XIAO
+
+GND de baterías/buck/XIAO/puerto serie: común
+470 uF + 100 nF entre 5V y GND, junto a la XIAO
+```
+
+El diodo evita retroalimentar el USB cuando se conecta para flashear. Debe ser
+un **buck-boost**, no solo un buck: cuatro AAA pueden caer por debajo de 5 V.
+El regulador debe aceptar aproximadamente 3,5–6,5 V de entrada y entregar **al
+menos 500 mA continuos**, aunque el consumo normal de Wi-Fi sea menor, para
+absorber ráfagas sin reinicios. No conectes las cuatro AAA directamente a `3V3`,
+`5V`, `BAT` ni a cualquier GPIO de la XIAO.
+
+Antes de soldar, identifica un rail **conmutado**: sin USB, debe medir la tensión
+del pack con la calculadora encendida y aproximadamente 0 V cuando se apaga. Si
+permanece alimentado al apagar, la XIAO seguirá gastando baterías; no es el punto
+adecuado. Confirma también que no hay caída apreciable al escanear Wi-Fi. Esta
+parte del montaje debe medirse en la unidad física: la posición exacta del pad
+no se infiere de fotografías ni de la UART.
 
 ## Fotografías del proceso
 

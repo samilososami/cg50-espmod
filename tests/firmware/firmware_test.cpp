@@ -23,8 +23,8 @@ static void scan_regressions()
 {
     assert(!WiFi.autoReconnect && savedCount==2);
     int writes=flashWrites;
-    WiFi.connection=WL_DISCONNECTED; reconnectIndex=0; pauseReconnect();
-    beginSavedReconnect(); advance(201);
+    WiFi.connection=WL_DISCONNECTED; reconnectIndex=reconnectTried=0; pauseReconnect();
+    beginSavedReconnect(); advance(121);
     assert(WiFi.connecting && WiFi.target==saved[0].ssid);
     int joins=WiFi.joins;
     beginSavedReconnect(); advance(500);
@@ -36,10 +36,16 @@ static void scan_regressions()
     assert(WiFi.result==WIFI_SCAN_RUNNING);
     advance(13000); assert(WiFi.joins==joins); // No auto-connect mid-scan.
     WiFi.result=(int)WiFi.rows.size(); loop(); assert(scanReady);
-    advance(11900); assert(WiFi.joins==joins); // Leave time to select a network.
-    advance(500); assert(WiFi.joins==joins+1 && WiFi.target==saved[1].ssid);
-    advance(20500); assert(!reconnectRunning && !WiFi.connecting);
-    advance(12500); assert(WiFi.target==saved[0].ssid && WiFi.joins==joins+2);
+    advance(799); assert(WiFi.joins==joins);
+    advance(130); assert(WiFi.joins==joins+1 && WiFi.target==saved[0].ssid);
+    std::string first=WiFi.target;
+    advance(RECONNECT_ATTEMPT_MS+10); assert(!reconnectRunning && !WiFi.connecting);
+    advance(RECONNECT_BETWEEN_MS+130);
+    assert(WiFi.joins==joins+2 && WiFi.target==saved[1].ssid);
+    std::string fallback=WiFi.target;
+    WiFi.connection=WL_CONNECTED; WiFi.current=fallback; loop();
+    assert(!strcmp(saved[0].ssid,fallback.c_str()) && strcmp(saved[1].ssid,first.c_str())==0);
+    assert(flashWrites==writes+1); // A working fallback is promoted once.
 
     // Transient radio busy: bounded deferred retries, no tight loop.
     WiFi.failStarts=2;
@@ -64,7 +70,7 @@ static void scan_regressions()
     assert(command("SCAN:90006")=="WAIT:90006");
     advance(250); WiFi.result=(int)WiFi.rows.size(); loop();
     assert(scanReady && WiFi.status()==WL_CONNECTED && WiFi.disconnects==disconnects);
-    assert(flashWrites==writes && savedCount==2); // Credentials untouched by recovery.
+    assert(flashWrites==writes+1 && savedCount==2); // Only fallback priority changed.
 }
 int main()
 {
@@ -125,16 +131,16 @@ int main()
     advance(201);assert(WiFi.connecting);
     WiFi.connection=WL_CONNECTED; WiFi.current="Home";
     pollWifiReconnect();
-    hostNetFailures=9;
+    hostNetFailures=2;
     assert(command("NET_BEGIN:3000")=="NET_DONE:3000");
     assert(netAttempt==10 && netFailure==NET_FAILURE_NONE);
     assert(command("NET_GET:3000")=="NET_DONE:3000");
-    hostNetFailures=10;
+    hostNetFailures=3;
     assert(command("NET_BEGIN:3001")=="NET_ERROR:3001:NETWORK");
     assert(netAttempt==10 && netFailure==NET_FAILURE_NETWORK);
     WiFi.connection=WL_DISCONNECTED;WiFi.current="";
     assert(command("NET_BEGIN:3002")=="NET_ERROR:3002:NO_WIFI");
-    assert(netAttempt==10 && netFailure==NET_FAILURE_NO_WIFI);
+    assert(netAttempt==7 && netFailure==NET_FAILURE_NO_WIFI);
     WiFi.connection=WL_CONNECTED;WiFi.current="Home";
     netState=1;netAttempt=4;netId=3003;
     assert(command("NET_GET:3003")=="NET_WAIT:3003:4:10");
@@ -157,5 +163,5 @@ int main()
     assert(command("GPT_CANCEL:4001")=="GPT_CANCELLED:4001");
     assert(!gptKey[0] && !gptPrompt[0]);
     scan_regressions();
-    puts("PASS firmware: 100 scans; reconnect/scan arbitration; 10-step network recovery; cancel, timeout, credentials; auth/NVS; UART; GPT regression.");
+    puts("PASS firmware: 100 scans; fast reconnect arbitration and fallback promotion; bounded network recovery; cancel, timeout, credentials; auth/NVS; UART; GPT regression.");
 }
